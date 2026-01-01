@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 
-const ProgressBar = ({ value, maxValue = 100, gradient, showLabel = true, height = 'h-2', animated = true }) => {
+const ProgressBar = ({ value, maxValue = 100, gradient, showLabel = true, height = 'h-2', animated = true, darkMode = true }) => {
   const barRef = useRef(null);
   const percentage = Math.min((value / maxValue) * 100, 100);
 
@@ -35,9 +35,11 @@ const ProgressBar = ({ value, maxValue = 100, gradient, showLabel = true, height
     'cyan-purple': '0 0 10px rgba(34, 211, 238, 0.5), 0 0 20px rgba(168, 85, 247, 0.3)',
   };
 
+  const trackBackground = darkMode ? 'bg-gray-800/80' : 'bg-gray-200';
+
   return (
     <div className="w-full">
-      <div className={`w-full ${height} bg-gray-800/80 rounded-full overflow-hidden relative`}>
+      <div className={`w-full ${height} ${trackBackground} rounded-full overflow-hidden relative`}>
         {/* Background shimmer */}
         <div className="absolute inset-0 shimmer opacity-30" />
         
@@ -61,7 +63,7 @@ const ProgressBar = ({ value, maxValue = 100, gradient, showLabel = true, height
       </div>
       
       {showLabel && (
-        <div className="flex justify-between mt-1 text-xs text-gray-500">
+        <div className={`flex justify-between mt-1 text-xs ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>
           <span>{value}</span>
           <span>{maxValue}</span>
         </div>
@@ -71,3 +73,4 @@ const ProgressBar = ({ value, maxValue = 100, gradient, showLabel = true, height
 };
 
 export default ProgressBar;
+

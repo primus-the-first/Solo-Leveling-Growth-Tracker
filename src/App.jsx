@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './components/Header';
+import SettingsModal from './components/SettingsModal';
 import TabNavigation from './components/TabNavigation';
 import PillarCard from './components/PillarCard';
 import QuestItem from './components/QuestItem';
@@ -7,144 +8,254 @@ import StatsPanel from './components/StatsPanel';
 import Footer from './components/Footer';
 import CalendarHeatmap from './components/CalendarHeatmap';
 import SystemMessage from './components/SystemMessage';
+import PlayerCard from './components/PlayerCard';
+import FocusModeOverlay from './components/FocusModeOverlay';
+import QuestResetTimer from './components/QuestResetTimer';
+import LevelUpModal from './components/LevelUpModal';
+import { XPToastContainer } from './components/XPToast';
+import RewardsTracker from './components/RewardsTracker';
+import MultiplierDisplay from './components/MultiplierDisplay';
+import BossBattle from './components/BossBattle';
+import BossCard from './components/BossCard';
+import AchievementsPanel from './components/AchievementsPanel';
+import JournalPanel from './components/JournalPanel';
+import SoundToggle from './components/SoundToggle';
+import useSounds from './hooks/useSounds';
+import {
+  DEFAULT_PLAYER,
+  DEFAULT_PILLARS,
+  DEFAULT_DAILY_QUESTS,
+  DEFAULT_WEEKLY_QUESTS,
+  DEFAULT_MONTHLY_QUESTS,
+  DEFAULT_BOSS_BATTLES,
+  DEFAULT_ACHIEVEMENTS,
+  DEFAULT_SETTINGS,
+  loadState,
+  saveState,
+  calculateLevel,
+  STREAK_BONUSES,
+} from './gameState';
 
 function App() {
   // Preloader State
   const [showPreloader, setShowPreloader] = useState(true);
   
-  // State Initialization with Persistence
+  // Settings
+  const [settings, setSettings] = useState(() => loadState('settings', DEFAULT_SETTINGS));
+  const darkMode = settings.darkMode;
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Sound effects
+  const sounds = useSounds();
+  const { playXPGain, playQuestComplete, playLevelUp, playAttack, playBossDefeat, playVictory, setSoundEnabled } = sounds;
+  
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    saveState('settings', settings);
+  }, [settings, darkMode]);
+  
+  const setDarkMode = (value) => {
+    setSettings(prev => ({ ...prev, darkMode: value }));
+  };
+  
+  // Tab State
   const [activeTab, setActiveTab] = useState('overview');
   const contentRef = useRef(null);
+
+  // ============ GAME STATE ============
   
-  // Load initial state or use defaults
-  const loadState = (key, defaultVal) => {
-    try {
-      const saved = localStorage.getItem(`solo-leveling-${key}`);
-      return saved ? JSON.parse(saved) : defaultVal;
-    } catch (e) {
-      console.error('Failed to load state', e);
-      return defaultVal;
-    }
-  };
-
-  const [pillars, setPillars] = useState(() => loadState('pillars', [
-    {
-      id: 1,
-      type: 'personal',
-      title: 'Personal & Discipline',
-      icon: 'flame',
-      level: 1,
-      xp: 0,
-      stats: [
-        { name: 'Self Control', value: 45 },
-        { name: 'Daily Discipline', value: 30 },
-        { name: 'Habit Strength', value: 25 },
-      ]
-    },
-    {
-      id: 2,
-      type: 'spiritual',
-      title: 'Spiritual Growth',
-      icon: 'star',
-      level: 1,
-      xp: 0,
-      stats: [
-        { name: 'Inner Peace', value: 35 },
-        { name: 'Courage', value: 40 },
-        { name: 'Wisdom', value: 30 },
-      ]
-    },
-    {
-      id: 3,
-      type: 'career',
-      title: 'Career & Skills',
-      icon: 'brain',
-      level: 1,
-      xp: 0,
-      stats: [
-        { name: 'Web Dev', value: 50 },
-        { name: 'AI/ML', value: 35 },
-        { name: 'Data Analysis', value: 40 },
-      ]
-    },
-    {
-      id: 4,
-      type: 'financial',
-      title: 'Financial',
-      icon: 'trending-up',
-      level: 1,
-      xp: 0,
-      stats: [
-        { name: 'Income', value: 20 },
-        { name: 'Savings', value: 15 },
-        { name: 'Investment', value: 10 },
-      ]
-    },
-  ]));
-
-  const [dailyQuests, setDailyQuests] = useState(() => loadState('dailyQuests', [
-    { id: 1, task: '5 min morning reflection', xp: 10, completed: false },
-    { id: 2, task: '60-90 min focused work', xp: 25, completed: false },
-    { id: 3, task: '5 min evening journal', xp: 10, completed: false },
-    { id: 4, task: 'Track daily spending', xp: 5, completed: false },
-  ]));
-
-  const [weeklyQuests, setWeeklyQuests] = useState(() => loadState('weeklyQuests', [
-    { id: 1, task: 'Review habit streaks', xp: 30, completed: false },
-    { id: 2, task: 'Read 1 spiritual chapter', xp: 25, completed: false },
-    { id: 3, task: 'Build project feature', xp: 50, completed: false },
-    { id: 4, task: 'Review income & expenses', xp: 20, completed: false },
-  ]));
-
-  const [monthlyQuests, setMonthlyQuests] = useState(() => loadState('monthlyQuests', [
-    { id: 1, task: 'Complete 30-Day Coding Challenge', xp: 500, completed: false },
-    { id: 2, task: 'Read 2 Non-Fiction Books', xp: 300, completed: false },
-    { id: 3, task: 'Hit gym 15 times', xp: 400, completed: false },
-  ]));
-
-  const [stats, setStats] = useState(() => loadState('stats', {
-    daysCompleted: 0,
-    totalXP: 0,
-    longestStreak: 0,
-  }));
-
-  // Simple History System for Calendar
+  // Player State
+  const [player, setPlayer] = useState(() => loadState('player', DEFAULT_PLAYER));
+  
+  // Pillars State (now as object)
+  const [pillars, setPillars] = useState(() => loadState('pillars', DEFAULT_PILLARS));
+  
+  // Quest States
+  const [dailyQuests, setDailyQuests] = useState(() => loadState('dailyQuests', DEFAULT_DAILY_QUESTS));
+  const [weeklyQuests, setWeeklyQuests] = useState(() => loadState('weeklyQuests', DEFAULT_WEEKLY_QUESTS));
+  const [monthlyQuests, setMonthlyQuests] = useState(() => loadState('monthlyQuests', DEFAULT_MONTHLY_QUESTS));
+  
+  // Boss Battles
+  const [bossBattles, setBossBattles] = useState(() => loadState('bossBattles', DEFAULT_BOSS_BATTLES));
+  
+  // Achievements
+  // eslint-disable-next-line no-unused-vars
+  const [achievements, setAchievements] = useState(() => loadState('achievements', DEFAULT_ACHIEVEMENTS));
+  
+  // Journal
+  const [journal, setJournal] = useState(() => loadState('journal', []));
+  
+  // History for Calendar
   const [history, setHistory] = useState(() => loadState('history', {}));
 
-  // Persistence Effects
-  useEffect(() => { localStorage.setItem('solo-leveling-pillars', JSON.stringify(pillars)); }, [pillars]);
-  useEffect(() => { localStorage.setItem('solo-leveling-dailyQuests', JSON.stringify(dailyQuests)); }, [dailyQuests]);
-  useEffect(() => { localStorage.setItem('solo-leveling-weeklyQuests', JSON.stringify(weeklyQuests)); }, [weeklyQuests]);
-  useEffect(() => { localStorage.setItem('solo-leveling-monthlyQuests', JSON.stringify(monthlyQuests)); }, [monthlyQuests]);
-  useEffect(() => { localStorage.setItem('solo-leveling-stats', JSON.stringify(stats)); }, [stats]);
-  useEffect(() => { localStorage.setItem('solo-leveling-history', JSON.stringify(history)); }, [history]);
+  // ============ PENALTY SYSTEM ============
   
-  // Update History on XP Gain
-  const updateHistory = (xp) => {
+  // Focus Mode / Penalty Zone state
+  const [penaltyMode, setPenaltyMode] = useState(() => loadState('penaltyMode', {
+    active: false,
+    type: null, // 'warning' | 'xp_reduction' | 'penalty_zone'
+    startTime: null,
+  }));
+  
+  // Recovery quests for penalty zone
+  const [recoveryQuests, setRecoveryQuests] = useState(() => loadState('recoveryQuests', [
+    { id: 'r1', task: 'Read 20 pages', xp: 30, completed: false },
+    { id: 'r2', task: '10 minutes meditation', xp: 20, completed: false },
+    { id: 'r3', task: 'Log today\'s expenses', xp: 25, completed: false },
+  ]));
+  
+  // Persist penalty state
+  useEffect(() => { saveState('penaltyMode', penaltyMode); }, [penaltyMode]);
+  useEffect(() => { saveState('recoveryQuests', recoveryQuests); }, [recoveryQuests]);
+
+  // ============ REWARD SYSTEM ============
+  
+  // Level up modal state
+  const [levelUpModal, setLevelUpModal] = useState({
+    visible: false,
+    level: 1,
+    title: '',
+    xpBonus: 0,
+  });
+  
+  // XP Toast notifications
+  const [xpToasts, setXpToasts] = useState([]);
+  
+  // Real-life rewards
+  const [rewards, setRewards] = useState(() => loadState('rewards', [
+    { id: '1', name: 'Coffee treat ☕', xpRequired: 500, claimed: false },
+    { id: '2', name: 'Game time (1 hour) 🎮', xpRequired: 1000, claimed: false },
+    { id: '3', name: 'Nice meal out 🍕', xpRequired: 2500, claimed: false },
+  ]));
+  
+  // Persist rewards
+  useEffect(() => { saveState('rewards', rewards); }, [rewards]);
+  
+  // Add XP toast
+  const showXPToast = useCallback((xp, type = 'quest', pillar = null) => {
+    const id = Date.now().toString();
+    setXpToasts(prev => [...prev, { id, xp, type, pillar }]);
+  }, []);
+  
+  // Remove XP toast
+  const removeXPToast = useCallback((id) => {
+    setXpToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+  
+  // Active boss battle
+  const [activeBattle, setActiveBattle] = useState(null);
+
+  // ============ PERSISTENCE ============
+  
+  useEffect(() => { saveState('player', player); }, [player]);
+  useEffect(() => { saveState('pillars', pillars); }, [pillars]);
+  useEffect(() => { saveState('dailyQuests', dailyQuests); }, [dailyQuests]);
+  useEffect(() => { saveState('weeklyQuests', weeklyQuests); }, [weeklyQuests]);
+  useEffect(() => { saveState('monthlyQuests', monthlyQuests); }, [monthlyQuests]);
+  useEffect(() => { saveState('bossBattles', bossBattles); }, [bossBattles]);
+  useEffect(() => { saveState('achievements', achievements); }, [achievements]);
+  useEffect(() => { saveState('journal', journal); }, [journal]);
+  useEffect(() => { saveState('history', history); }, [history]);
+
+  // ============ XP SYSTEM ============
+  
+  // Add XP to player and optionally a pillar
+  const addXP = (amount, pillarId = null) => {
+    // Apply multiplier
+    const multipliedXP = Math.round(amount * player.xpMultiplier);
+    
+    // Play XP gain sound
+    playXPGain();
+    
+    // Update player XP
+    setPlayer(prev => {
+      const newTotalXP = prev.totalXP + multipliedXP;
+      const { level, title } = calculateLevel(newTotalXP);
+      
+      return {
+        ...prev,
+        totalXP: newTotalXP,
+        level,
+        title,
+      };
+    });
+    
+    // Update pillar XP if specified
+    if (pillarId && pillars[pillarId]) {
+      setPillars(prev => {
+        const pillar = prev[pillarId];
+        const newXP = pillar.xp + multipliedXP;
+        const newLevel = Math.floor(newXP / 100) + 1; // Simple level calc for pillars
+        
+        return {
+          ...prev,
+          [pillarId]: {
+            ...pillar,
+            xp: newXP,
+            level: newLevel,
+          }
+        };
+      });
+    }
+    
+    // Update history
     const today = new Date().toISOString().split('T')[0];
     setHistory(prev => ({
       ...prev,
       [today]: {
-        xp: (prev[today]?.xp || 0) + xp,
-        completed: true
+        xp: (prev[today]?.xp || 0) + multipliedXP,
+        completed: true,
       }
     }));
     
-    // Update Total XP
-    setStats(prev => ({
-      ...prev,
-      totalXP: prev.totalXP + xp
-    }));
+    return multipliedXP;
+  };
+  
+  // Handle boss defeat - defined after addXP
+  const handleBossDefeat = (boss) => {
+    // Play victory sounds
+    playVictory();
+    playBossDefeat();
+    
+    // Award XP
+    addXP(boss.xpReward);
+    showXPToast(boss.xpReward, 'boss');
+    
+    // Mark boss as defeated
+    setBossBattles(prev => prev.map(b => 
+      b.id === boss.id ? { ...b, defeated: true } : b
+    ));
+    
+    // Show level up if there's a title reward
+    if (boss.titleReward) {
+      setTimeout(() => {
+        setLevelUpModal({
+          visible: true,
+          level: player.level,
+          title: boss.titleReward,
+          xpBonus: boss.xpReward,
+        });
+      }, 1000);
+    }
+    
+    setActiveBattle(null);
   };
 
-  // Toggle daily quest completion
+  // ============ QUEST HANDLERS ============
+  
   const toggleDailyQuest = (id) => {
     setDailyQuests(prev => 
       prev.map(quest => {
         if (quest.id === id) {
-          // If completing, add XP to history
-          if (!quest.completed) updateHistory(quest.xp);
-          // Note: Removing XP on uncheck is complex with history, ignoring for simplicity in MVP
+          if (!quest.completed) {
+            addXP(quest.xp, quest.pillar);
+            playQuestComplete();
+          }
           return { ...quest, completed: !quest.completed };
         }
         return quest;
@@ -152,12 +263,14 @@ function App() {
     );
   };
 
-  // Toggle weekly quest completion
   const toggleWeeklyQuest = (id) => {
     setWeeklyQuests(prev => 
       prev.map(quest => {
         if (quest.id === id) {
-          if (!quest.completed) updateHistory(quest.xp);
+          if (!quest.completed) {
+            addXP(quest.xp, quest.pillar);
+            playQuestComplete();
+          }
           return { ...quest, completed: !quest.completed };
         }
         return quest;
@@ -165,12 +278,14 @@ function App() {
     );
   };
 
-  // Toggle monthly quest completion
   const toggleMonthlyQuest = (id) => {
     setMonthlyQuests(prev => 
       prev.map(quest => {
         if (quest.id === id) {
-          if (!quest.completed) updateHistory(quest.xp);
+          if (!quest.completed) {
+            addXP(quest.xp, quest.pillar);
+            playQuestComplete();
+          }
           return { ...quest, completed: !quest.completed };
         }
         return quest;
@@ -178,19 +293,134 @@ function App() {
     );
   };
 
-  // Animate tab content change is now handled by CSS keyframes on the main element with key={activeTab}
+  // ============ STREAK SYSTEM ============
+  
+  // Check and update streaks (call this on app load/day change)
+  // eslint-disable-next-line no-unused-vars
+  const updateStreaks = () => {
+    // const today = new Date().toISOString().split('T')[0];
+    // eslint-disable-next-line no-unused-vars
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    
+    // Check if all daily quests were completed yesterday
+    const allDailyCompleted = dailyQuests.every(q => q.completed);
+    
+    if (allDailyCompleted) {
+      setPlayer(prev => {
+        const newStreak = prev.streaks.daily + 1;
+        const longestDaily = Math.max(prev.streaks.longestDaily, newStreak);
+        
+        // Check for streak bonuses
+        let xpMultiplier = prev.xpMultiplier;
+        if (STREAK_BONUSES[newStreak]) {
+          xpMultiplier = STREAK_BONUSES[newStreak].multiplier;
+          // TODO: Add bonus XP notification
+        }
+        
+        return {
+          ...prev,
+          xpMultiplier,
+          streaks: {
+            ...prev.streaks,
+            daily: newStreak,
+            longestDaily,
+          }
+        };
+      });
+    }
+  };
+
+  // ============ PENALTY HANDLERS ============
+  
+  // Activate penalty zone (call when user fails quests)
+  const activatePenaltyZone = () => {
+    setPenaltyMode({
+      active: true,
+      type: 'penalty_zone',
+      startTime: Date.now(),
+    });
+    
+    // Reset recovery quests
+    setRecoveryQuests(prev => prev.map(q => ({ ...q, completed: false })));
+    
+    // Update player penalty status
+    setPlayer(prev => ({
+      ...prev,
+      penalties: {
+        ...prev.penalties,
+        active: true,
+        type: 'penalty_zone',
+        missedDays: prev.penalties.missedDays + 1,
+      }
+    }));
+  };
+  
+  // Complete a recovery quest
+  const completeRecoveryQuest = (questId) => {
+    setRecoveryQuests(prev => 
+      prev.map(q => {
+        if (q.id === questId && !q.completed) {
+          // Award XP for recovery
+          addXP(q.xp, 'personal');
+          return { ...q, completed: true };
+        }
+        return q;
+      })
+    );
+  };
+  
+  // Exit penalty zone
+  const exitPenaltyZone = () => {
+    // Check if all recovery quests are complete
+    const allComplete = recoveryQuests.every(q => q.completed);
+    
+    if (allComplete) {
+      // Award recovery bonus
+      addXP(50, null);
+      
+      // Deactivate penalty mode
+      setPenaltyMode({
+        active: false,
+        type: null,
+        startTime: null,
+      });
+      
+      // Update player
+      setPlayer(prev => ({
+        ...prev,
+        penalties: {
+          ...prev.penalties,
+          active: false,
+          type: null,
+        },
+        xpMultiplier: Math.min(prev.xpMultiplier + 0.5, 2.0), // Recovery bonus multiplier
+      }));
+      
+      // Reset recovery quests for next time
+      setRecoveryQuests(prev => prev.map(q => ({ ...q, completed: false })));
+    }
+  };
+
+  // ============ RENDER HELPERS ============
+  
+  // Convert pillars object to array for rendering
+  const pillarsArray = Object.values(pillars);
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
         return (
           <div className="space-y-8">
-             {/* Calendar Heatmap on Dashboard */}
-             <CalendarHeatmap history={history} />
+            {/* Player Card */}
+            <PlayerCard player={player} darkMode={darkMode} />
+            
+            {/* Calendar Heatmap */}
+            <CalendarHeatmap history={history} darkMode={darkMode} />
 
+            {/* Pillar Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {pillars.map((pillar, index) => (
-                <PillarCard key={pillar.id} pillar={pillar} index={index} />
+              {pillarsArray.map((pillar, index) => (
+                <PillarCard key={pillar.id} pillar={pillar} index={index} darkMode={darkMode} />
               ))}
             </div>
           </div>
@@ -199,12 +429,22 @@ function App() {
       case 'daily':
         return (
           <div className="glass-card p-6 rounded-2xl max-w-2xl mx-auto animate-enter">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold gradient-text">Daily Quests</h2>
               <div className="xp-badge">
                 {dailyQuests.filter(q => q.completed).length}/{dailyQuests.length} Complete
               </div>
             </div>
+            
+            {/* Reset Timer */}
+            <div className="mb-6">
+              <QuestResetTimer 
+                resetType="daily" 
+                onReset={() => setDailyQuests(DEFAULT_DAILY_QUESTS)}
+                darkMode={darkMode}
+              />
+            </div>
+            
             <div className="space-y-3">
               {dailyQuests.map(quest => (
                 <QuestItem 
@@ -212,11 +452,12 @@ function App() {
                   quest={quest}
                   onToggle={toggleDailyQuest}
                   variant="daily"
+                  darkMode={darkMode}
                 />
               ))}
             </div>
-            <div className="mt-6 pt-4 border-t border-gray-700/50 flex justify-between items-center">
-              <span className="text-gray-400">Total Potential XP</span>
+            <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-300'} flex justify-between items-center`}>
+              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Total Potential XP</span>
               <span className="text-xl font-bold text-cyan-400">
                 +{dailyQuests.reduce((sum, q) => sum + q.xp, 0)} XP
               </span>
@@ -227,7 +468,7 @@ function App() {
       case 'weekly':
         return (
           <div className="glass-card p-6 rounded-2xl max-w-2xl mx-auto animate-enter">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
                 Weekly Quests
               </h2>
@@ -235,6 +476,16 @@ function App() {
                 {weeklyQuests.filter(q => q.completed).length}/{weeklyQuests.length} Complete
               </div>
             </div>
+            
+            {/* Reset Timer */}
+            <div className="mb-6">
+              <QuestResetTimer 
+                resetType="weekly" 
+                onReset={() => setWeeklyQuests(DEFAULT_WEEKLY_QUESTS)}
+                darkMode={darkMode}
+              />
+            </div>
+            
             <div className="space-y-3">
               {weeklyQuests.map(quest => (
                 <QuestItem 
@@ -242,11 +493,12 @@ function App() {
                   quest={quest}
                   onToggle={toggleWeeklyQuest}
                   variant="weekly"
+                  darkMode={darkMode}
                 />
               ))}
             </div>
-            <div className="mt-6 pt-4 border-t border-gray-700/50 flex justify-between items-center">
-              <span className="text-gray-400">Total Potential XP</span>
+            <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-300'} flex justify-between items-center`}>
+              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Total Potential XP</span>
               <span className="text-xl font-bold text-purple-400">
                 +{weeklyQuests.reduce((sum, q) => sum + q.xp, 0)} XP
               </span>
@@ -257,7 +509,7 @@ function App() {
       case 'monthly':
         return (
           <div className="glass-card p-6 rounded-2xl max-w-2xl mx-auto animate-enter shadow-amber-500/10 border-amber-500/20">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-yellow-500">
                 Monthly Quests
               </h2>
@@ -265,18 +517,29 @@ function App() {
                 {monthlyQuests.filter(q => q.completed).length}/{monthlyQuests.length} Complete
               </div>
             </div>
+            
+            {/* Reset Timer */}
+            <div className="mb-6">
+              <QuestResetTimer 
+                resetType="monthly" 
+                onReset={() => setMonthlyQuests(DEFAULT_MONTHLY_QUESTS)}
+                darkMode={darkMode}
+              />
+            </div>
+            
             <div className="space-y-3">
               {monthlyQuests.map(quest => (
                 <QuestItem 
                   key={quest.id}
                   quest={quest}
                   onToggle={toggleMonthlyQuest}
-                  variant="monthly" // Need to handle this variant in QuestItem styling
+                  variant="monthly"
+                  darkMode={darkMode}
                 />
               ))}
             </div>
-            <div className="mt-6 pt-4 border-t border-gray-700/50 flex justify-between items-center">
-              <span className="text-gray-400">Total Potential XP</span>
+            <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-300'} flex justify-between items-center`}>
+              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Total Potential XP</span>
               <span className="text-xl font-bold text-amber-400">
                 +{monthlyQuests.reduce((sum, q) => sum + q.xp, 0)} XP
               </span>
@@ -285,7 +548,71 @@ function App() {
         );
       
       case 'stats':
-        return <StatsPanel stats={stats} />;
+        return (
+          <div className="space-y-6">
+            {/* XP Multiplier Display */}
+            <MultiplierDisplay 
+              multiplier={player.xpMultiplier} 
+              streakDays={player.streaks.daily}
+              darkMode={darkMode}
+            />
+            
+            {/* Stats Panel */}
+            <StatsPanel 
+              player={player}
+              pillars={pillarsArray}
+              achievements={achievements}
+              darkMode={darkMode}
+            />
+            
+            {/* Real-Life Rewards */}
+            <RewardsTracker
+              player={player}
+              rewards={rewards}
+              setRewards={setRewards}
+              darkMode={darkMode}
+            />
+            
+            {/* Achievements */}
+            <AchievementsPanel
+              achievements={achievements}
+              darkMode={darkMode}
+            />
+            
+            {/* Boss Battles */}
+            <div className={`glass-card p-6 rounded-2xl ${darkMode ? '' : 'bg-white/80'}`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className={`p-2 rounded-lg ${darkMode ? 'bg-red-500/20' : 'bg-red-100'}`}>
+                  <span className="text-2xl">💀</span>
+                </div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Boss Battles
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {bossBattles.map(boss => (
+                  <BossCard
+                    key={boss.id}
+                    boss={boss}
+                    playerLevel={player.level}
+                    onChallenge={(b) => setActiveBattle(b)}
+                    darkMode={darkMode}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'journal':
+        return (
+          <JournalPanel 
+            journal={journal} 
+            setJournal={setJournal} 
+            darkMode={darkMode} 
+          />
+        );
       
       default:
         return null;
@@ -293,18 +620,81 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen py-6 px-4 md:px-8 relative overflow-hidden font-body">
+    <div className="min-h-screen py-6 px-4 md:px-8 relative overflow-hidden font-body transition-colors duration-300">
+      {/* Focus Mode Overlay */}
+      <FocusModeOverlay
+        isActive={penaltyMode.active}
+        penaltyType={penaltyMode.type}
+        recoveryQuests={recoveryQuests}
+        onQuestComplete={completeRecoveryQuest}
+        onExit={exitPenaltyZone}
+        darkMode={darkMode}
+      />
+      
+      {/* Level Up Modal */}
+      <LevelUpModal
+        isVisible={levelUpModal.visible}
+        level={levelUpModal.level}
+        title={levelUpModal.title}
+        xpBonus={levelUpModal.xpBonus}
+        onClose={() => setLevelUpModal(prev => ({ ...prev, visible: false }))}
+        onShow={playLevelUp}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal 
+        isVisible={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        darkMode={darkMode} 
+      />
+      
+      {/* XP Toast Notifications */}
+      <XPToastContainer
+        toasts={xpToasts}
+        onRemoveToast={removeXPToast}
+      />
+      
+      {/* Boss Battle Overlay */}
+      {activeBattle && (
+        <BossBattle
+          boss={activeBattle}
+          playerLevel={player.level}
+          onDefeat={handleBossDefeat}
+          onClose={() => setActiveBattle(null)}
+          onAttack={playAttack}
+        />
+      )}
+      
       {/* System Preloader */}
       {showPreloader && (
         <SystemMessage onAccept={() => setShowPreloader(false)} />
       )}
 
+      {/* DEV: Test Buttons - Remove in production */}
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        <SoundToggle onToggle={setSoundEnabled} darkMode={darkMode} />
+        {!penaltyMode.active && (
+          <button
+            onClick={activatePenaltyZone}
+            className="px-4 py-2 bg-red-500/80 hover:bg-red-600 text-white text-sm rounded-lg shadow-lg transition-all"
+          >
+            ⚠️ Test Penalty
+          </button>
+        )}
+        <button
+          onClick={() => {
+            showXPToast(50, 'quest', 'personal');
+            setLevelUpModal({ visible: true, level: player.level + 1, title: 'Shadow Knight', xpBonus: 100 });
+          }}
+          className="px-4 py-2 bg-purple-500/80 hover:bg-purple-600 text-white text-sm rounded-lg shadow-lg transition-all"
+        >
+          🎉 Test Level Up
+        </button>
+      </div>
+
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Radial gradient overlay */}
         <div className="absolute inset-0 bg-gradient-radial from-cyan-500/5 via-transparent to-transparent" />
-        
-        {/* Floating orbs */}
         <div 
           className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-cyan-500/5 blur-3xl animate-pulse"
           style={{ animationDuration: '4s' }}
@@ -317,8 +707,12 @@ function App() {
 
       {/* Content Container */}
       <div className="max-w-5xl mx-auto relative z-10">
-        <Header />
-        <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Header 
+          darkMode={darkMode} 
+          setDarkMode={setDarkMode} 
+          onOpenSettings={() => setShowSettings(true)}
+        />
+        <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} darkMode={darkMode} />
         
         {/* Tab Content */}
         <main 

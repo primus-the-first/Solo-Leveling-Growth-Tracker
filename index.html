@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -11,6 +11,34 @@
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <style>
+      html, body, #root {
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
+      html.dark {
+        background: linear-gradient(135deg, #0a0a0f 0%, #050508 50%, #0a0a0f 100%);
+        color: #ffffff;
+      }
+      html:not(.dark) {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
+        color: #1e293b;
+      }
+      body, #root {
+        background: transparent;
+      }
+    </style>
+    <script>
+      // Check theme preference before page renders to prevent flash
+      (function() {
+        const saved = localStorage.getItem('solo-leveling-darkMode');
+        const isDark = saved !== null ? JSON.parse(saved) : true;
+        if (!isDark) {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

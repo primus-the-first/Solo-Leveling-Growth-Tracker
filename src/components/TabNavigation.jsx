@@ -1,7 +1,7 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useRef } from 'react';
 import gsap from 'gsap';
 
-const TabNavigation = ({ activeTab, setActiveTab }) => {
+const TabNavigation = ({ activeTab, setActiveTab, darkMode }) => {
   const tabsRef = useRef([]);
   const indicatorRef = useRef(null);
   const containerRef = useRef(null);
@@ -11,18 +11,11 @@ const TabNavigation = ({ activeTab, setActiveTab }) => {
     { id: 'daily', label: 'Daily' },
     { id: 'weekly', label: 'Weekly' },
     { id: 'monthly', label: 'Monthly' },
+    { id: 'journal', label: 'Journal' },
     { id: 'stats', label: 'Stats' },
   ];
 
-  /* Removed broken GSAP animation to fix visibility issues
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-    }, containerRef);
-    return () => ctx.revert();
-  }, []);
-  */
-
-  const handleTabClick = (tabId, index, e) => {
+  const handleTabClick = (tabId) => {
     // Animate the clicked tab
     const tabIndex = tabs.findIndex(t => t.id === tabId);
     gsap.to(tabsRef.current[tabIndex], {
@@ -42,19 +35,19 @@ const TabNavigation = ({ activeTab, setActiveTab }) => {
         {/* Animated Background Indicator */}
         <div 
           ref={indicatorRef}
-          className="absolute h-full top-0 rounded-lg bg-gray-800/50 hidden" // Hidden GSAP indicator for now
+          className="absolute h-full top-0 rounded-lg bg-gray-800/50 hidden"
         />
 
         {tabs.map((tab, index) => (
           <button
             key={tab.id}
             ref={el => tabsRef.current[index] = el}
-            onClick={(e) => handleTabClick(tab.id, index, e)}
+            onClick={() => handleTabClick(tab.id)}
             className={`
               tab-button group relative overflow-hidden animate-enter px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300
               ${activeTab === tab.id 
-                ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-300 shadow-lg' 
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                ? `bg-gradient-to-r from-cyan-500/20 to-purple-500/20 shadow-lg ${darkMode ? 'text-cyan-300' : 'text-cyan-700'}` 
+                : `${darkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'}`
               }
             `}
             style={{ animationDelay: `${index * 100}ms` }}
@@ -80,3 +73,4 @@ const TabNavigation = ({ activeTab, setActiveTab }) => {
 };
 
 export default TabNavigation;
+
