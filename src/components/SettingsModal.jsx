@@ -1,9 +1,13 @@
 import { useRef, useEffect } from 'react';
-import { Download, Upload, Trash2, X, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Download, Upload, Trash2, X, Settings, Sun, Moon, LogOut } from 'lucide-react';
 import gsap from 'gsap';
 import { exportSaveData, importSaveData } from '../gameState';
+import { useAuth } from '../context/AuthContext';
 
-const SettingsModal = ({ isVisible, onClose, darkMode }) => {
+const SettingsModal = ({ isVisible, onClose, darkMode, setDarkMode }) => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const overlayRef = useRef(null);
   const modalRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -73,6 +77,16 @@ const SettingsModal = ({ isVisible, onClose, darkMode }) => {
     if (confirm('CRITICAL WARNING: This will PERMANENTLY DELETE all your progress, stats, and journal entries. This action cannot be undone.\n\nAre you absolutely sure you want to reset?')) {
       localStorage.clear();
       window.location.reload();
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      onClose();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
     }
   };
 
@@ -168,6 +182,54 @@ const SettingsModal = ({ isVisible, onClose, darkMode }) => {
               </div>
             </div>
           </div>
+
+          {/* Appearance Section */}
+          <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'}`}>
+            <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Appearance</h3>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
+                darkMode 
+                  ? 'border-gray-600 hover:bg-gray-700/50' 
+                  : 'border-gray-200 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {darkMode ? (
+                  <Sun className="w-5 h-5 text-amber-400" />
+                ) : (
+                  <Moon className="w-5 h-5 text-blue-500" />
+                )}
+                <span className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                  {darkMode ? 'Light Mode' : 'Dark Mode'}
+                </span>
+              </div>
+              <div className={`px-2 py-1 rounded text-xs ${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'}`}>
+                {darkMode ? 'Dark' : 'Light'}
+              </div>
+            </button>
+          </div>
+
+          {/* Account Section */}
+          {user && (
+            <div className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'}`}>
+              <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Account</h3>
+              <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Logged in as: {user.email}
+              </p>
+              <button
+                onClick={handleLogout}
+                className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
+                  darkMode 
+                    ? 'border-red-500/30 hover:bg-red-900/20 text-red-300' 
+                    : 'border-red-200 hover:bg-red-50 text-red-600'
+                }`}
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-medium">Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import QuestItem from './components/QuestItem';
 import StatsPanel from './components/StatsPanel';
 import Footer from './components/Footer';
 import CalendarHeatmap from './components/CalendarHeatmap';
-import SystemMessage from './components/SystemMessage';
+import DailyQuestPopup from './components/DailyQuestPopup';
 import PlayerCard from './components/PlayerCard';
 import FocusModeOverlay from './components/FocusModeOverlay';
 import QuestResetTimer from './components/QuestResetTimer';
@@ -23,6 +23,7 @@ import AchievementsPanel from './components/AchievementsPanel';
 import JournalPanel from './components/JournalPanel';
 import SoundToggle from './components/SoundToggle';
 import useSounds from './hooks/useSounds';
+import { useAuth } from './context/AuthContext';
 import {
   DEFAULT_PLAYER,
   DEFAULT_PILLARS,
@@ -36,10 +37,16 @@ import {
   saveState,
   calculateLevel,
   STREAK_BONUSES,
+  saveToFirestore,
+  loadFromFirestore,
 } from './gameState';
 
 // Main Dashboard Component (was App)
 function Dashboard() {
+  // Auth state
+  const { user } = useAuth();
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  
   // Preloader State
   const [showPreloader, setShowPreloader] = useState(true);
   
@@ -184,6 +191,54 @@ function Dashboard() {
   useEffect(() => { saveState('achievements', achievements); }, [achievements]);
   useEffect(() => { saveState('journal', journal); }, [journal]);
   useEffect(() => { saveState('history', history); }, [history]);
+
+  // ============ FIRESTORE CLOUD SYNC ============
+  
+  // Load data from Firestore when user logs in
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (user && !isDataLoaded) {
+        const cloudData = await loadFromFirestore(user.uid);
+        if (cloudData) {
+          // Load cloud data into state
+          if (cloudData.player) setPlayer(cloudData.player);
+          if (cloudData.pillars) setPillars(cloudData.pillars);
+          if (cloudData.dailyQuests) setDailyQuests(cloudData.dailyQuests);
+          if (cloudData.weeklyQuests) setWeeklyQuests(cloudData.weeklyQuests);
+          if (cloudData.monthlyQuests) setMonthlyQuests(cloudData.monthlyQuests);
+          if (cloudData.bossBattles) setBossBattles(cloudData.bossBattles);
+          if (cloudData.achievements) setAchievements(cloudData.achievements);
+          if (cloudData.journal) setJournal(cloudData.journal);
+          if (cloudData.history) setHistory(cloudData.history);
+        }
+        setIsDataLoaded(true);
+      }
+    };
+    loadUserData();
+  }, [user, isDataLoaded]);
+
+  // Auto-save to Firestore when game state changes (debounced)
+  useEffect(() => {
+    if (!user || !isDataLoaded) return;
+    
+    const saveTimeout = setTimeout(() => {
+      const gameData = {
+        player,
+        pillars,
+        dailyQuests,
+        weeklyQuests,
+        monthlyQuests,
+        bossBattles,
+        achievements,
+        journal,
+        history
+      };
+      saveToFirestore(user.uid, gameData);
+    }, 2000); // Debounce 2 seconds
+    
+    return () => clearTimeout(saveTimeout);
+  }, [user, isDataLoaded, player, pillars, dailyQuests, weeklyQuests, monthlyQuests, bossBattles, achievements, journal, history]);
+
 
   // ============ XP SYSTEM ============
   
@@ -670,7 +725,8 @@ function Dashboard() {
       <SettingsModal 
         isVisible={showSettings} 
         onClose={() => setShowSettings(false)} 
-        darkMode={darkMode} 
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
       />
       
       {/* XP Toast Notifications */}
@@ -690,9 +746,25 @@ function Dashboard() {
         />
       )}
       
-      {/* System Preloader */}
+      {/* Daily Quest Popup with Penalty Check */}
       {showPreloader && (
-        <SystemMessage onAccept={() => setShowPreloader(false)} />
+        <DailyQuestPopup 
+          dailyQuests={dailyQuests}
+          lastVisitDate={loadState('lastVisitDate', null)}
+          onAccept={() => {
+            setShowPreloader(false);
+            saveState('lastVisitDate', new Date().toDateString());
+          }}
+          onApplyPenalty={(missedCount) => {
+            // Reduce XP and multiplier for missed quests
+            const penaltyXP = missedCount * 10;
+            setPlayer(prev => ({
+              ...prev,
+              totalXP: Math.max(0, prev.totalXP - penaltyXP),
+              xpMultiplier: Math.max(1.0, prev.xpMultiplier - 0.1)
+            }));
+          }}
+        />
       )}
 
       {/* DEV: Test Buttons - Remove in production */}
@@ -738,7 +810,6 @@ function Dashboard() {
       <div className="max-w-5xl mx-auto relative z-10">
         <Header 
           darkMode={darkMode} 
-          setDarkMode={setDarkMode} 
           onOpenSettings={() => setShowSettings(true)}
         />
         <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} darkMode={darkMode} />
@@ -763,9 +834,17 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/onboarding" element={<OnboardingWrapper />} />
       <Route path="/app" element={<Dashboard />} />
     </Routes>
   );
+}
+
+// Wrapper for onboarding that handles completion
+import OnboardingFlow from './components/OnboardingFlow';
+
+function OnboardingWrapper() {
+  return <OnboardingFlow />;
 }
 
 export default App;

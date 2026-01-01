@@ -1,8 +1,11 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Zap, Flame, Trophy, TrendingUp, Shield } from 'lucide-react';
 import gsap from 'gsap';
 import ProgressBar from './ProgressBar';
 import { getCurrentLevelXP, getNextLevelXP } from '../gameState';
+import { useAuth } from '../context/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 // Generate a license number from player data
 const generateLicenseNo = (name) => {
@@ -25,8 +28,27 @@ const getRank = (level) => {
 };
 
 const PlayerCard = ({ player, darkMode }) => {
+  const { user } = useAuth();
+  const [hunterName, setHunterName] = useState(player.name);
   const cardRef = useRef(null);
   const xpBarRef = useRef(null);
+  
+  // Load hunter name from Firestore
+  useEffect(() => {
+    const loadHunterName = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists() && userDoc.data().hunterName) {
+            setHunterName(userDoc.data().hunterName);
+          }
+        } catch (error) {
+          console.error('Failed to load hunter name:', error);
+        }
+      }
+    };
+    loadHunterName();
+  }, [user]);
   
   // Calculate XP progress for current level
   const currentLevelXP = getCurrentLevelXP(player.level);
@@ -35,7 +57,7 @@ const PlayerCard = ({ player, darkMode }) => {
   const xpInCurrentLevel = Math.max(0, Math.min(player.totalXP - currentLevelXP, xpNeededForLevel));
   const xpProgress = xpNeededForLevel <= 0 ? 100 : Math.min((xpInCurrentLevel / xpNeededForLevel) * 100, 100);
   
-  const licenseNo = generateLicenseNo(player.name);
+  const licenseNo = generateLicenseNo(hunterName);
   const rank = getRank(player.level);
   
   // Entrance animation
@@ -90,7 +112,7 @@ const PlayerCard = ({ player, darkMode }) => {
             }}
           >
             <div className="w-20 h-24 rounded bg-gradient-to-br from-cyan-600 to-purple-600 flex items-center justify-center text-4xl font-bold text-white shadow-inner">
-              {player.name.charAt(0).toUpperCase()}
+              {hunterName.charAt(0).toUpperCase()}
             </div>
           </div>
           
@@ -125,7 +147,7 @@ const PlayerCard = ({ player, darkMode }) => {
           <div>
             <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Name:</span>
             <p className={`text-xl font-bold font-display ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {player.name}
+              {hunterName}
             </p>
           </div>
           

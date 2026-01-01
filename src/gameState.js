@@ -342,13 +342,13 @@ export const importSaveData = (jsonData) => {
 // ============================================
 
 // Save all game data to Firestore
-export const saveToFirestore = async (userId) => {
+export const saveToFirestore = async (userId, gameData = null) => {
   if (!userId) return false;
   
   try {
-    const gameData = exportSaveData();
+    const dataToSave = gameData || exportSaveData();
     await setDoc(doc(db, 'users', userId, 'gameData', 'current'), {
-      ...gameData,
+      ...dataToSave,
       lastSaved: serverTimestamp()
     }, { merge: true });
     return true;

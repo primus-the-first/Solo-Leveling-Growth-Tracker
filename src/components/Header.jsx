@@ -1,13 +1,35 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Sparkles, Zap, Sun, Moon, Settings } from 'lucide-react';
+import { Sparkles, Zap, Settings } from 'lucide-react';
 import gsap from 'gsap';
+import { useAuth } from '../context/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
-const Header = ({ darkMode, setDarkMode, onOpenSettings }) => {
+const Header = ({ darkMode, onOpenSettings }) => {
+  const { user } = useAuth();
+  const [hunterName, setHunterName] = useState('Hunter');
   const titleRef = useRef(null);
   const subtitleRef = useRef(null);
   const badgeRef = useRef(null);
   const containerRef = useRef(null);
+
+  // Load hunter name from Firestore
+  useEffect(() => {
+    const loadHunterName = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists() && userDoc.data().hunterName) {
+            setHunterName(userDoc.data().hunterName);
+          }
+        } catch (error) {
+          console.error('Failed to load hunter name:', error);
+        }
+      }
+    };
+    loadHunterName();
+  }, [user]);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -27,33 +49,11 @@ const Header = ({ darkMode, setDarkMode, onOpenSettings }) => {
 
   return (
     <header ref={containerRef} className="text-center py-8 px-4 relative">
-      {/* Theme Toggle Button */}
-      <button
-        onClick={() => setDarkMode(!darkMode)}
-        className={`
-          absolute top-4 right-4 z-50 p-3 rounded-xl 
-          ${darkMode 
-            ? 'bg-gray-800/80 border-gray-600 hover:bg-gray-700' 
-            : 'bg-white/80 border-gray-300 hover:bg-gray-100'
-          }
-          border shadow-lg backdrop-blur-sm
-          transition-all duration-300 hover:scale-110 
-          cursor-pointer
-        `}
-        aria-label="Toggle theme"
-      >
-        {darkMode ? (
-          <Sun className="w-6 h-6 text-amber-400" />
-        ) : (
-          <Moon className="w-6 h-6 text-blue-500" />
-        )}
-      </button>
-
       {/* Settings Button */}
       <button
         onClick={onOpenSettings}
         className={`
-          absolute top-4 left-4 z-50 p-3 rounded-xl 
+          absolute top-4 right-4 z-50 p-3 rounded-xl 
           ${darkMode 
             ? 'bg-gray-800/80 border-gray-600 hover:bg-gray-700' 
             : 'bg-white/80 border-gray-300 hover:bg-gray-100'
@@ -73,10 +73,10 @@ const Header = ({ darkMode, setDarkMode, onOpenSettings }) => {
       {/* Main Title */}
       <h1 
         ref={titleRef}
-        className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-wider mb-3 gradient-text animate-enter"
+        className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-wider mb-3 gradient-text animate-enter uppercase"
         style={{ fontFamily: 'Cinzel, serif' }}
       >
-        PRIMUS AETERNUS
+        {hunterName}
       </h1>
       
       {/* Subtitle */}

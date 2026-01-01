@@ -4,6 +4,8 @@ import { Zap, ChevronRight, Flame, Target, Trophy } from 'lucide-react';
 import gsap from 'gsap';
 import AuthModal from '../components/AuthModal';
 import { useAuth } from '../context/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -61,15 +63,47 @@ const LandingPage = () => {
     setShowAuthModal(true);
   };
 
-  const handleAuthSuccess = () => {
-    // Animate out before navigation
-    gsap.to('.landing-content', {
-      opacity: 0,
-      y: -30,
-      duration: 0.4,
-      ease: 'power2.in',
-      onComplete: () => navigate('/app')
-    });
+  const handleAuthSuccess = async () => {
+    // Get the current user from Firebase auth directly (not from React state which may be stale)
+    const { auth } = await import('../firebase');
+    const currentUser = auth.currentUser;
+    
+    if (currentUser) {
+      try {
+        const onboardingDoc = await getDoc(doc(db, 'users', currentUser.uid, 'gameData', 'onboarding'));
+        const destination = onboardingDoc.exists() && onboardingDoc.data().completed 
+          ? '/app' 
+          : '/onboarding';
+        
+        // Animate out before navigation
+        gsap.to('.landing-content', {
+          opacity: 0,
+          y: -30,
+          duration: 0.4,
+          ease: 'power2.in',
+          onComplete: () => navigate(destination)
+        });
+      } catch (error) {
+        console.error('Error checking onboarding:', error);
+        // Default to onboarding on error
+        gsap.to('.landing-content', {
+          opacity: 0,
+          y: -30,
+          duration: 0.4,
+          ease: 'power2.in',
+          onComplete: () => navigate('/onboarding')
+        });
+      }
+    } else {
+      // Fallback - go to onboarding
+      gsap.to('.landing-content', {
+        opacity: 0,
+        y: -30,
+        duration: 0.4,
+        ease: 'power2.in',
+        onComplete: () => navigate('/onboarding')
+      });
+    }
   };
 
   const features = [
@@ -81,17 +115,20 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gray-950 overflow-hidden relative">
       {/* Video Background */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      <div 
+        className="absolute inset-0 z-0 overflow-hidden bg-cover bg-center bg-no-repeat bg-gray-950"
+        style={{ backgroundImage: "url('/landing-poster.png')" }}
+      >
         {/* Mobile Video (visible on small screens) */}
         <video
           autoPlay
           loop
           muted
           playsInline
+          poster="/landing-poster.png"
           className="md:hidden absolute min-w-full min-h-full w-auto h-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover"
         >
           <source src="/MOBILE-Arise-Solo-Leveling.webm" type="video/webm" />
-          <source src="/MOBILE-Arise-Solo-Leveling.mp4" type="video/mp4" />
         </video>
         {/* Desktop Video (visible on medium screens and up) */}
         <video
@@ -99,11 +136,11 @@ const LandingPage = () => {
           loop
           muted
           playsInline
+          poster="/landing-poster.png"
           className="hidden md:block absolute min-w-full min-h-full w-auto h-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover"
           style={{ objectPosition: 'center 30%' }}
         >
           <source src="/hero-background.webm" type="video/webm" />
-          <source src="/hero-background.mp4" type="video/mp4" />
         </video>
         {/* Dark overlay for readability */}
         <div className="absolute inset-0 bg-black/50" />
