@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import Header from './components/Header';
 import SettingsModal from './components/SettingsModal';
 import TabNavigation from './components/TabNavigation';
@@ -36,7 +38,8 @@ import {
   STREAK_BONUSES,
 } from './gameState';
 
-function App() {
+// Main Dashboard Component (was App)
+function Dashboard() {
   // Preloader State
   const [showPreloader, setShowPreloader] = useState(true);
   
@@ -752,6 +755,16 @@ function App() {
         <Footer />
       </div>
     </div>
+  );
+}
+
+// App with Routes
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/app" element={<Dashboard />} />
+    </Routes>
   );
 }
 

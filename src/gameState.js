@@ -1,4 +1,6 @@
 // Game State Configuration and Utilities
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from './firebase';
 
 // Level progression thresholds
 export const LEVEL_THRESHOLDS = [
@@ -331,6 +333,70 @@ export const importSaveData = (jsonData) => {
     return true;
   } catch (e) {
     console.error('Import failed:', e);
+    return false;
+  }
+};
+
+// ============================================
+// Firestore Cloud Sync Functions
+// ============================================
+
+// Save all game data to Firestore
+export const saveToFirestore = async (userId) => {
+  if (!userId) return false;
+  
+  try {
+    const gameData = exportSaveData();
+    await setDoc(doc(db, 'users', userId, 'gameData', 'current'), {
+      ...gameData,
+      lastSaved: serverTimestamp()
+    }, { merge: true });
+    return true;
+  } catch (e) {
+    console.error('Failed to save to Firestore:', e);
+    return false;
+  }
+};
+
+// Load game data from Firestore
+export const loadFromFirestore = async (userId) => {
+  if (!userId) return null;
+  
+  try {
+    const docRef = doc(db, 'users', userId, 'gameData', 'current');
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // Remove Firestore metadata
+      delete data.lastSaved;
+      return data;
+    }
+    return null;
+  } catch (e) {
+    console.error('Failed to load from Firestore:', e);
+    return null;
+  }
+};
+
+// Sync localStorage with Firestore (load from cloud, merge with local)
+export const syncWithFirestore = async (userId) => {
+  if (!userId) return false;
+  
+  try {
+    const cloudData = await loadFromFirestore(userId);
+    
+    if (cloudData) {
+      // Import cloud data to localStorage
+      importSaveData(cloudData);
+      return true;
+    }
+    
+    // No cloud data - push local data to cloud
+    await saveToFirestore(userId);
+    return true;
+  } catch (e) {
+    console.error('Sync failed:', e);
     return false;
   }
 };
