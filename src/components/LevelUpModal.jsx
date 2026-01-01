@@ -21,6 +21,19 @@ const LevelUpModal = ({ isVisible, level, title, xpBonus, onClose, onShow }) => 
   const cardRef = useRef(null);
   const particlesRef = useRef([]);
   
+  // Handle Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (isVisible && e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    if (isVisible) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isVisible, onClose]);
+  
   // Entrance animation
   useEffect(() => {
     if (isVisible && overlayRef.current && cardRef.current) {
@@ -46,13 +59,14 @@ const LevelUpModal = ({ isVisible, level, title, xpBonus, onClose, onShow }) => 
         }
       );
       
-      // Animate particles falling
+        // Animate particles falling
+      const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
       particlesRef.current.forEach((particle, i) => {
         if (particle) {
           gsap.fromTo(particle,
             { y: -20, opacity: 1, rotation: 0 },
             { 
-              y: window.innerHeight + 50, 
+              y: winHeight + 50, 
               opacity: 0, 
               rotation: Math.random() * 720 - 360,
               duration: 2 + Math.random() * 2,
@@ -71,6 +85,9 @@ const LevelUpModal = ({ isVisible, level, title, xpBonus, onClose, onShow }) => 
     <div
       ref={overlayRef}
       className="fixed inset-0 z-[200] flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="levelup-title"
       style={{
         background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
         backdropFilter: 'blur(10px)',
@@ -132,7 +149,7 @@ const LevelUpModal = ({ isVisible, level, title, xpBonus, onClose, onShow }) => 
         </div>
         
         {/* Title */}
-        <h2 className="text-2xl font-bold text-white mb-2 font-display tracking-wide">
+        <h2 id="levelup-title" className="text-2xl font-bold text-white mb-2 font-display tracking-wide">
           {title}
         </h2>
         

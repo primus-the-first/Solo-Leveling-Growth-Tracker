@@ -8,12 +8,12 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
   
   // Add new reward
   const handleAddReward = () => {
-    if (!newReward.name.trim()) return;
+    if (!newReward.name.trim() || !newReward.xpRequired || isNaN(newReward.xpRequired)) return;
     
     const reward = {
-      id: Date.now().toString(),
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `reward_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: newReward.name,
-      xpRequired: parseInt(newReward.xpRequired) || 1000,
+      xpRequired: Number(newReward.xpRequired),
       claimed: false,
     };
     
@@ -35,7 +35,11 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
   };
   
   // Check if reward is unlocked
-  const isUnlocked = (xpRequired) => player.totalXP >= xpRequired;
+  const isUnlocked = (xpRequired) => {
+    const currentXP = Number(player?.totalXP) || 0;
+    const req = Number(xpRequired);
+    return !isNaN(req) && currentXP >= req;
+  };
   
   // Sort rewards by XP required
   const sortedRewards = [...rewards].sort((a, b) => a.xpRequired - b.xpRequired);
@@ -85,7 +89,10 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
                 type="number"
                 placeholder="XP Required"
                 value={newReward.xpRequired}
-                onChange={e => setNewReward(prev => ({ ...prev, xpRequired: e.target.value }))}
+                onChange={e => {
+                  const val = parseInt(e.target.value, 10);
+                  setNewReward(prev => ({ ...prev, xpRequired: isNaN(val) ? '' : val }));
+                }}
                 className={`flex-1 px-4 py-2 rounded-lg border ${
                   darkMode 
                     ? 'bg-gray-900/50 border-gray-700 text-white placeholder:text-gray-500' 
@@ -210,7 +217,10 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
             {sortedRewards.filter(r => r.claimed).length} / {sortedRewards.length} claimed
           </span>
           <span className={darkMode ? 'text-amber-400' : 'text-amber-600'}>
-            Next: {sortedRewards.find(r => !r.claimed && !isUnlocked(r.xpRequired))?.xpRequired.toLocaleString() || 'All unlocked!'} XP
+            {(() => {
+              const r = sortedRewards.find(r => !r.claimed);
+              return r ? `Next: ${r.xpRequired.toLocaleString()} XP` : 'All rewards claimed!';
+            })()}
           </span>
         </div>
       )}

@@ -150,6 +150,26 @@ function App() {
   // Active boss battle
   const [activeBattle, setActiveBattle] = useState(null);
 
+  // Penalty Timer State
+  const [penaltyTimeRemaining, setPenaltyTimeRemaining] = useState(() => loadState('penaltyTime', 15 * 60));
+
+  // Penalty Timer Effect
+  // Penalty Timer Effect
+  useEffect(() => {
+    let timer;
+    if (penaltyMode.active) {
+      timer = setInterval(() => {
+        setPenaltyTimeRemaining(prev => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [penaltyMode.active]);
+
+  // Persist penalty timer
+  useEffect(() => {
+    saveState('penaltyTime', penaltyTimeRemaining);
+  }, [penaltyTimeRemaining]);
+
   // ============ PERSISTENCE ============
   
   useEffect(() => { saveState('player', player); }, [player]);
@@ -223,8 +243,8 @@ function App() {
     playBossDefeat();
     
     // Award XP
-    addXP(boss.xpReward);
-    showXPToast(boss.xpReward, 'boss');
+    const awardedXP = addXP(boss.xpReward);
+    showXPToast(awardedXP, 'boss');
     
     // Mark boss as defeated
     setBossBattles(prev => prev.map(b => 
@@ -339,6 +359,7 @@ function App() {
       type: 'penalty_zone',
       startTime: Date.now(),
     });
+    setPenaltyTimeRemaining(15 * 60); // Reset timer to 15 mins
     
     // Reset recovery quests
     setRecoveryQuests(prev => prev.map(q => ({ ...q, completed: false })));
@@ -624,6 +645,7 @@ function App() {
       {/* Focus Mode Overlay */}
       <FocusModeOverlay
         isActive={penaltyMode.active}
+        timeRemaining={penaltyTimeRemaining}
         penaltyType={penaltyMode.type}
         recoveryQuests={recoveryQuests}
         onQuestComplete={completeRecoveryQuest}
@@ -673,23 +695,27 @@ function App() {
       {/* DEV: Test Buttons - Remove in production */}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
         <SoundToggle onToggle={setSoundEnabled} darkMode={darkMode} />
-        {!penaltyMode.active && (
-          <button
-            onClick={activatePenaltyZone}
-            className="px-4 py-2 bg-red-500/80 hover:bg-red-600 text-white text-sm rounded-lg shadow-lg transition-all"
-          >
-            ⚠️ Test Penalty
-          </button>
+        {import.meta.env.DEV && (
+          <>
+            {!penaltyMode.active && (
+              <button
+                onClick={activatePenaltyZone}
+                className="px-4 py-2 bg-red-500/80 hover:bg-red-600 text-white text-sm rounded-lg shadow-lg transition-all"
+              >
+                ⚠️ Test Penalty
+              </button>
+            )}
+            <button
+              onClick={() => {
+                showXPToast(50, 'quest', 'personal');
+                setLevelUpModal({ visible: true, level: player.level + 1, title: 'Shadow Knight', xpBonus: 100 });
+              }}
+              className="px-4 py-2 bg-purple-500/80 hover:bg-purple-600 text-white text-sm rounded-lg shadow-lg transition-all"
+            >
+              🎉 Test Level Up
+            </button>
+          </>
         )}
-        <button
-          onClick={() => {
-            showXPToast(50, 'quest', 'personal');
-            setLevelUpModal({ visible: true, level: player.level + 1, title: 'Shadow Knight', xpBonus: 100 });
-          }}
-          className="px-4 py-2 bg-purple-500/80 hover:bg-purple-600 text-white text-sm rounded-lg shadow-lg transition-all"
-        >
-          🎉 Test Level Up
-        </button>
       </div>
 
       {/* Background Effects */}

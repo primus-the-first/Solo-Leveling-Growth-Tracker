@@ -66,8 +66,9 @@ const QuestItem = ({ quest, onToggle, variant = 'daily', darkMode = true }) => {
       onClick={handleClick}
       className={`
         quest-item group
-        ${quest.completed ? `completed ${variant} ${variantColors.border}` : ''}
-        ${darkMode ? '' : 'bg-gray-50 border-gray-200'}
+        ${quest.completed ? `completed ${variant}` : ''}
+        ${quest.completed ? variantColors.border : (darkMode ? '' : 'border-gray-200')}
+        ${darkMode ? '' : 'bg-gray-50'}
       `}
       style={{
         boxShadow: quest.completed ? variantColors.glow : 'none'

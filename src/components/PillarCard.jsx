@@ -38,6 +38,7 @@ const iconColors = {
 const PillarCard = ({ pillar, index, darkMode }) => {
   const cardRef = useRef(null);
   const IconComponent = iconMap[pillar.icon] || Flame;
+  const currentXP = Number(pillar.xp ?? 0);
 
   const handleHover = (isHovering) => {
     gsap.to(cardRef.current, {
@@ -70,7 +71,7 @@ const PillarCard = ({ pillar, index, darkMode }) => {
           </div>
         </div>
         <div className="text-right">
-          <span className="text-2xl font-bold gradient-text">{pillar.xp % 100}</span>
+          <span className="text-2xl font-bold gradient-text">{currentXP % 100}</span>
           <span className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>/100 XP</span>
         </div>
       </div>
@@ -78,7 +79,7 @@ const PillarCard = ({ pillar, index, darkMode }) => {
       {/* XP Progress Bar */}
       <div className="mb-5">
         <ProgressBar 
-          value={pillar.xp % 100} 
+          value={currentXP % 100} 
           maxValue={100} 
           gradient={gradientMap[pillar.id] || 'cyan-purple'}
           showLabel={false}

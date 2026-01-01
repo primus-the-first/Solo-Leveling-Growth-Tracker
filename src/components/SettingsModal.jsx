@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Download, Upload, Trash2, X, Settings, RefreshCw } from 'lucide-react';
+import { Download, Upload, Trash2, X, Settings } from 'lucide-react';
 import gsap from 'gsap';
 import { exportSaveData, importSaveData } from '../gameState';
 
@@ -44,6 +44,10 @@ const SettingsModal = ({ isVisible, onClose, darkMode }) => {
     if (!file) return;
 
     const reader = new FileReader();
+    reader.onerror = () => {
+      alert('Error reading file.');
+      e.target.value = '';
+    };
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target.result);

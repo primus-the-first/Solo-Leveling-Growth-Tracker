@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { AlertTriangle, Clock, CheckCircle2, Circle, Flame, XCircle } from 'lucide-react';
 import gsap from 'gsap';
 
 const FocusModeOverlay = ({ 
   isActive, 
+  timeRemaining,
   penaltyType, 
   recoveryQuests, 
   onQuestComplete, 
@@ -12,7 +13,7 @@ const FocusModeOverlay = ({
 }) => {
   const overlayRef = useRef(null);
   const contentRef = useRef(null);
-  const [timeRemaining, setTimeRemaining] = useState(15 * 60); // 15 minutes default
+  
   
   // Animation on mount
   useEffect(() => {
@@ -28,22 +29,7 @@ const FocusModeOverlay = ({
     }
   }, [isActive]);
 
-  // Countdown timer
-  useEffect(() => {
-    if (!isActive) return;
-    
-    const timer = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 0) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, [isActive]);
+
 
   // Format time as MM:SS
   const formatTime = (seconds) => {
@@ -124,13 +110,23 @@ const FocusModeOverlay = ({
           <div className="space-y-3">
             {recoveryQuests?.map((quest, index) => (
               <div
-                key={quest.id || index}
-                onClick={() => onQuestComplete?.(quest.id)}
+                key={quest.id ?? index}
+                role="button"
+                tabIndex={quest.completed ? -1 : 0}
+                aria-pressed={quest.completed}
+                onClick={() => !quest.completed && onQuestComplete?.(quest.id)}
+                onKeyDown={(e) => {
+                  if (!quest.completed && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onQuestComplete?.(quest.id);
+                  }
+                }}
                 className={`
-                  flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-300
+                  flex items-center gap-3 p-4 rounded-xl transition-all duration-300
+                  focus:outline-none focus:ring-2 focus:ring-red-400
                   ${quest.completed 
-                    ? 'bg-green-500/20 border border-green-500/30' 
-                    : 'bg-gray-800/50 border border-gray-700/50 hover:bg-gray-700/50'
+                    ? 'bg-green-500/20 border border-green-500/30 cursor-default' 
+                    : 'bg-gray-800/50 border border-gray-700/50 hover:bg-gray-700/50 cursor-pointer'
                   }
                 `}
                 style={{

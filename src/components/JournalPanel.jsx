@@ -183,7 +183,7 @@ const JournalPanel = ({ journal, setJournal, darkMode = true }) => {
                 key={entry.id}
                 onClick={() => setSelectedEntryId(entry.id)}
                 className={`
-                  p-3 rounded-xl cursor-pointer transition-all border
+                  p-3 rounded-xl cursor-pointer transition-all border group
                   ${selectedEntryId === entry.id
                     ? darkMode 
                       ? 'bg-cyan-900/20 border-cyan-500/50' 

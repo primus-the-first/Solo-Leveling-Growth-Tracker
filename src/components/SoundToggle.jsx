@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
-import { loadState } from '../gameState';
+import { loadState, saveState } from '../gameState';
 
 const SoundToggle = ({ onToggle, darkMode = true }) => {
   const [enabled, setEnabled] = useState(() => loadState('soundEnabled', true));
@@ -9,6 +9,7 @@ const SoundToggle = ({ onToggle, darkMode = true }) => {
     const newState = !enabled;
     setEnabled(newState);
     onToggle?.(newState);
+    saveState('soundEnabled', newState);
   };
 
   return (

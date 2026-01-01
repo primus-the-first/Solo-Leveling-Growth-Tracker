@@ -2,15 +2,23 @@ import { useRef, useEffect } from 'react';
 import { Zap, TrendingUp, Flame, Star, Gift } from 'lucide-react';
 import gsap from 'gsap';
 
-const XPToast = ({ xp, type = 'quest', pillar, onComplete, position = 'top-right' }) => {
+const XPToast = ({ xp, type = 'quest', pillar, onComplete, position = 'top-right', style }) => {
   const toastRef = useRef(null);
+  const onCompleteRef = useRef(onComplete);
+  
+  // Keep callback ref updated
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
   
   // Animation
   useEffect(() => {
     if (toastRef.current) {
       const tl = gsap.timeline({
         onComplete: () => {
-          setTimeout(onComplete, 500);
+          if (typeof onCompleteRef.current === 'function') {
+            setTimeout(() => onCompleteRef.current(), 500);
+          }
         }
       });
       
@@ -31,7 +39,7 @@ const XPToast = ({ xp, type = 'quest', pillar, onComplete, position = 'top-right
         ease: 'power2.in'
       });
     }
-  }, [onComplete]);
+  }, []);
   
   // Get icon and colors based on type
   const getStyles = () => {
@@ -88,7 +96,8 @@ const XPToast = ({ xp, type = 'quest', pillar, onComplete, position = 'top-right
   return (
     <div
       ref={toastRef}
-      className={`fixed ${positionClasses[position]} z-[150] pointer-events-none`}
+      className={`fixed ${positionClasses[position] || positionClasses['top-right']} z-[150] pointer-events-none`}
+      style={style}
     >
       <div className={`
         px-5 py-3 rounded-xl 
@@ -119,17 +128,18 @@ export const XPToastContainer = ({ toasts, onRemoveToast }) => {
   return (
     <>
       {toasts.map((toast, index) => (
-        <div 
-          key={toast.id} 
-          style={{ transform: `translateY(${index * 70}px)` }}
-        >
-          <XPToast
-            xp={toast.xp}
-            type={toast.type}
-            pillar={toast.pillar}
-            onComplete={() => onRemoveToast(toast.id)}
-          />
-        </div>
+        <XPToast
+          key={toast.id}
+          xp={toast.xp}
+          type={toast.type}
+          pillar={toast.pillar}
+          position={toast.position}
+          style={{ 
+            ...toast.style, 
+            transform: `translateY(${index * 70}px) ${toast.style?.transform || ''}`.trim() 
+          }}
+          onComplete={() => onRemoveToast(toast.id)}
+        />
       ))}
     </>
   );

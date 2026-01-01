@@ -1,27 +1,28 @@
 import { useRef } from 'react';
 import { Trophy, Flame, Zap, Lock, Unlock, Target, Star, TrendingUp, BookOpen } from 'lucide-react';
 
-const StatsPanel = ({ player, pillars, achievements, darkMode = true }) => {
+const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel = 100 }) => {
   const containerRef = useRef(null);
-  const achievementsRef = useRef([]);
+
   const milestonesRef = useRef([]);
 
   // Player stats for display
   const playerStats = [
-    { label: 'Total XP Earned', value: player.totalXP.toLocaleString(), icon: Zap },
-    { label: 'Current Level', value: player.level, icon: TrendingUp },
-    { label: 'Current Streak', value: `${player.streaks.daily} days`, icon: Flame },
-    { label: 'Longest Streak', value: `${player.streaks.longestDaily} days`, icon: Trophy },
+    { label: 'Total XP Earned', value: (player?.totalXP ?? 0).toLocaleString(), icon: Zap },
+    { label: 'Current Level', value: player?.level ?? 0, icon: TrendingUp },
+    { label: 'Current Streak', value: `${player?.streaks?.daily ?? 0} days`, icon: Flame },
+    { label: 'Longest Streak', value: `${player?.streaks?.longestDaily ?? 0} days`, icon: Trophy },
   ];
 
   // Dynamic milestones based on actual progress
+
   const milestones = [
-    { label: '7-Day Streak', unlocked: player.streaks.daily >= 7 || player.streaks.longestDaily >= 7 },
-    { label: '30-Day Streak', unlocked: player.streaks.daily >= 30 || player.streaks.longestDaily >= 30 },
-    { label: 'Level 5 Reached', unlocked: player.level >= 5 },
-    { label: 'Level 10 Reached', unlocked: player.level >= 10 },
-    { label: '1000 XP Earned', unlocked: player.totalXP >= 1000 },
-    { label: '10000 XP Earned', unlocked: player.totalXP >= 10000 },
+    { label: '7-Day Streak', unlocked: (player?.streaks?.daily ?? 0) >= 7 || (player?.streaks?.longestDaily ?? 0) >= 7 },
+    { label: '30-Day Streak', unlocked: (player?.streaks?.daily ?? 0) >= 30 || (player?.streaks?.longestDaily ?? 0) >= 30 },
+    { label: 'Level 5 Reached', unlocked: (player?.level ?? 0) >= 5 },
+    { label: 'Level 10 Reached', unlocked: (player?.level ?? 0) >= 10 },
+    { label: '1000 XP Earned', unlocked: (player?.totalXP ?? 0) >= 1000 },
+    { label: '10000 XP Earned', unlocked: (player?.totalXP ?? 0) >= 10000 },
   ];
 
   // Pillar icons
@@ -70,12 +71,16 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true }) => {
           </div>
 
           <div className="space-y-3">
-            {pillars.map((pillar, index) => {
-              const IconComponent = pillarIcons[pillar.id] || Star;
+            {(Array.isArray(pillars) ? pillars : []).map((p, index) => {
+              const pillar = p || {};
+              const { id = 'unknown', title = 'Untitled', level = 1, xp = 0 } = pillar;
+              const IconComponent = pillarIcons[id] || Star;
+              const requiredXP = Math.max(1, pillar.xpRequired || xpPerLevel || 100);
+              const currentXP = (Number(xp) || 0) % requiredXP;
+              
               return (
                 <div
-                  key={pillar.id}
-                  ref={el => achievementsRef.current[index] = el}
+                  key={`${id}-${index}`}
                   className={`flex items-center justify-between p-3 rounded-xl transition-colors duration-300 animate-enter ${
                     darkMode ? 'bg-gray-800/50 hover:bg-gray-800' : 'bg-gray-100 hover:bg-gray-200'
                   }`}
@@ -83,18 +88,18 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true }) => {
                 >
                   <div className="flex items-center gap-3">
                     <IconComponent className={`w-5 h-5 ${
-                      pillar.id === 'personal' ? 'text-orange-400' :
-                      pillar.id === 'spiritual' ? 'text-purple-400' :
-                      pillar.id === 'financial' ? 'text-green-400' :
-                      pillar.id === 'career' ? 'text-cyan-400' :
+                      id === 'personal' ? 'text-orange-400' :
+                      id === 'spiritual' ? 'text-purple-400' :
+                      id === 'financial' ? 'text-green-400' :
+                      id === 'career' ? 'text-cyan-400' :
                       'text-blue-400'
                     }`} />
-                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{pillar.title}</span>
+                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{title}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-xl font-bold gradient-text">Lv.{pillar.level}</span>
+                    <span className="text-xl font-bold gradient-text">Lv.{level}</span>
                     <span className={`text-sm ml-2 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                      {pillar.xp % 100}/100 XP
+                      {currentXP}/{requiredXP} XP
                     </span>
                   </div>
                 </div>

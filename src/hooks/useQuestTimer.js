@@ -54,10 +54,18 @@ export const formatTimeRemaining = (ms) => {
 
 // Hook to track quest reset timer
 export const useQuestTimer = (resetType) => {
+  const [prevResetType, setPrevResetType] = useState(resetType);
   const [timeRemaining, setTimeRemaining] = useState(() => getTimeUntilReset(resetType));
   const [shouldReset, setShouldReset] = useState(false);
   
+  if (resetType !== prevResetType) {
+    setPrevResetType(resetType);
+    setTimeRemaining(getTimeUntilReset(resetType));
+    setShouldReset(false);
+  }
+  
   useEffect(() => {
+
     const interval = setInterval(() => {
       const remaining = getTimeUntilReset(resetType);
       setTimeRemaining(remaining);
@@ -89,35 +97,37 @@ export const shouldResetQuests = (lastResetDate, resetType) => {
   const now = new Date();
   const lastReset = new Date(lastResetDate);
   
+  // Normalize comparisons to UTC
   switch (resetType) {
     case 'daily':
-      // Reset if it's a new day
-      return now.toDateString() !== lastReset.toDateString();
+      return now.getUTCFullYear() !== lastReset.getUTCFullYear() ||
+             now.getUTCMonth() !== lastReset.getUTCMonth() ||
+             now.getUTCDate() !== lastReset.getUTCDate();
       
     case 'weekly': {
-      // Reset if it's a new week (Monday)
-      const nowWeek = getWeekNumber(now);
-      const lastWeek = getWeekNumber(lastReset);
-      return nowWeek !== lastWeek;
+      const nowISO = getISOInfo(now);
+      const lastISO = getISOInfo(lastReset);
+      return nowISO.week !== lastISO.week || nowISO.year !== lastISO.year;
     }
       
     case 'monthly':
-      // Reset if it's a new month
-      return now.getMonth() !== lastReset.getMonth() || 
-             now.getFullYear() !== lastReset.getFullYear();
+      return now.getUTCFullYear() !== lastReset.getUTCFullYear() ||
+             now.getUTCMonth() !== lastReset.getUTCMonth();
       
     default:
       return false;
   }
 };
 
-// Get ISO week number
-const getWeekNumber = (date) => {
+// Get ISO week number and year (UTC)
+const getISOInfo = (date) => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  const year = d.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return { week, year };
 };
 
 export default useQuestTimer;

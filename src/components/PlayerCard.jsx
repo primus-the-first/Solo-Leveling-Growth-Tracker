@@ -31,9 +31,9 @@ const PlayerCard = ({ player, darkMode }) => {
   // Calculate XP progress for current level
   const currentLevelXP = getCurrentLevelXP(player.level);
   const nextLevelXP = getNextLevelXP(player.level);
-  const xpInCurrentLevel = player.totalXP - currentLevelXP;
   const xpNeededForLevel = nextLevelXP - currentLevelXP;
-  const xpProgress = Math.min((xpInCurrentLevel / xpNeededForLevel) * 100, 100);
+  const xpInCurrentLevel = Math.max(0, Math.min(player.totalXP - currentLevelXP, xpNeededForLevel));
+  const xpProgress = xpNeededForLevel <= 0 ? 100 : Math.min((xpInCurrentLevel / xpNeededForLevel) * 100, 100);
   
   const licenseNo = generateLicenseNo(player.name);
   const rank = getRank(player.level);
@@ -52,7 +52,7 @@ const PlayerCard = ({ player, darkMode }) => {
     <div
       ref={cardRef}
       className={`relative mb-8 rounded-2xl overflow-hidden ${
-        player.penalties.active ? 'ring-2 ring-red-500/50' : ''
+        player.penalties?.active ? 'ring-2 ring-red-500/50' : ''
       }`}
       style={{
         background: darkMode 
@@ -142,7 +142,10 @@ const PlayerCard = ({ player, darkMode }) => {
             <div className="flex justify-between text-xs mb-1">
               <span className={darkMode ? 'text-gray-500' : 'text-gray-500'}>XP Progress</span>
               <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>
-                {xpInCurrentLevel.toLocaleString()} / {xpNeededForLevel.toLocaleString()}
+                {xpNeededForLevel > 0 
+                  ? `${xpInCurrentLevel.toLocaleString()} / ${xpNeededForLevel.toLocaleString()}`
+                  : 'Max Level'
+                }
               </span>
             </div>
             <div ref={xpBarRef}>
@@ -193,9 +196,9 @@ const PlayerCard = ({ player, darkMode }) => {
               </span>
             </div>
             <div className="flex items-center gap-1 justify-end">
-              <Flame className={`w-3 h-3 ${player.streaks.daily > 0 ? 'text-orange-400' : 'text-gray-500'}`} />
+              <Flame className={`w-3 h-3 ${(player.streaks?.daily ?? 0) > 0 ? 'text-orange-400' : 'text-gray-500'}`} />
               <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {player.streaks.daily}d Streak
+                {player.streaks?.daily ?? 0}d Streak
               </span>
             </div>
           </div>

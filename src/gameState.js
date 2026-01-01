@@ -12,8 +12,20 @@ export const LEVEL_THRESHOLDS = [
   { level: 8, xpRequired: 5300, title: 'A-Rank Hunter' },
   { level: 9, xpRequired: 7200, title: 'A-Rank Hunter' },
   { level: 10, xpRequired: 10000, title: 'A-Rank Hunter' },
+  { level: 11, xpRequired: 13000, title: 'A-Rank Hunter' },
+  { level: 12, xpRequired: 16000, title: 'A-Rank Hunter' },
+  { level: 13, xpRequired: 19000, title: 'A-Rank Hunter' },
+  { level: 14, xpRequired: 22000, title: 'A-Rank Hunter' },
   { level: 15, xpRequired: 25000, title: 'S-Rank Hunter' },
+  { level: 16, xpRequired: 30000, title: 'S-Rank Hunter' },
+  { level: 17, xpRequired: 35000, title: 'S-Rank Hunter' },
+  { level: 18, xpRequired: 40000, title: 'S-Rank Hunter' },
+  { level: 19, xpRequired: 45000, title: 'S-Rank Hunter' },
   { level: 20, xpRequired: 50000, title: 'National Hunter' },
+  { level: 21, xpRequired: 60000, title: 'National Hunter' },
+  { level: 22, xpRequired: 70000, title: 'National Hunter' },
+  { level: 23, xpRequired: 80000, title: 'National Hunter' },
+  { level: 24, xpRequired: 90000, title: 'National Hunter' },
   { level: 25, xpRequired: 100000, title: 'Shadow Monarch' },
 ];
 
@@ -229,12 +241,12 @@ export const DEFAULT_BOSS_BATTLES = [
 
 // Default achievements
 export const DEFAULT_ACHIEVEMENTS = [
-  { id: 'first-quest', name: 'First Steps', description: 'Complete your first quest', category: 'quests', xp: 10, unlocked: false },
-  { id: 'week-warrior', name: 'Week Warrior', description: 'Maintain a 7-day streak', category: 'streak', xp: 50, unlocked: false },
+  { id: 'first-quest', name: 'First Steps', description: 'Complete your first quest', category: 'quests', xp: 10, unlocked: false, progress: 0 },
+  { id: 'week-warrior', name: 'Week Warrior', description: 'Maintain a 7-day streak', category: 'streak', xp: 50, unlocked: false, progress: 0 },
   { id: 'month-master', name: 'Month Master', description: 'Maintain a 30-day streak', category: 'streak', xp: 200, unlocked: false, progress: 0 },
   { id: 'bookworm', name: 'Bookworm', description: 'Read 5 books', category: 'pillar_education', xp: 250, unlocked: false, progress: 0 },
-  { id: 'shadow-slayer', name: 'Shadow Slayer', description: 'Defeat your first boss', category: 'boss', xp: 500, unlocked: false },
-  { id: 'penalty-survivor', name: 'Penalty Survivor', description: 'Exit the Penalty Zone', category: 'level', xp: 100, unlocked: false },
+  { id: 'shadow-slayer', name: 'Shadow Slayer', description: 'Defeat your first boss', category: 'boss', xp: 500, unlocked: false, progress: 0 },
+  { id: 'penalty-survivor', name: 'Penalty Survivor', description: 'Exit the Penalty Zone', category: 'level', xp: 100, unlocked: false, progress: 0 },
 ];
 
 // Streak bonus XP

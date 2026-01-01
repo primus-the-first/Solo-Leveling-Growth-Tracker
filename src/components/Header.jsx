@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { Sparkles, Zap, Sun, Moon, Settings } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -110,3 +111,9 @@ const Header = ({ darkMode, setDarkMode, onOpenSettings }) => {
 };
 
 export default Header;
+
+Header.propTypes = {
+  darkMode: PropTypes.bool.isRequired,
+  setDarkMode: PropTypes.func.isRequired,
+  onOpenSettings: PropTypes.func.isRequired,
+};

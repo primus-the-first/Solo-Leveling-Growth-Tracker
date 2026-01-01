@@ -59,8 +59,12 @@ const AchievementCard = ({ achievement, darkMode = true }) => {
     >
       {/* Locked overlay */}
       {!isUnlocked && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/50 z-10">
-          <Lock className="w-6 h-6 text-gray-500" />
+        <div 
+          className="absolute inset-0 flex items-center justify-center rounded-xl bg-gray-900/50 z-10"
+          role="status"
+          aria-label="Achievement locked"
+        >
+          <Lock className="w-6 h-6 text-gray-500" aria-hidden="true" />
         </div>
       )}
       
@@ -83,7 +87,11 @@ const AchievementCard = ({ achievement, darkMode = true }) => {
           }`}>
             {achievement.name}
           </h4>
-          <p className={`text-xs truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          <p className={`text-xs truncate ${
+            !isUnlocked 
+              ? 'text-gray-500' 
+              : darkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}>
             {achievement.description}
           </p>
         </div>
@@ -108,7 +116,8 @@ const AchievementCard = ({ achievement, darkMode = true }) => {
 };
 
 const AchievementsPanel = ({ achievements, darkMode = true }) => {
-  const unlockedCount = achievements.filter(a => a.unlocked).length;
+  const safeAchievements = achievements || [];
+  const unlockedCount = safeAchievements.filter(a => a.unlocked).length;
   
   return (
     <div className={`glass-card p-6 rounded-2xl ${darkMode ? '' : 'bg-white/80'}`}>
@@ -125,13 +134,13 @@ const AchievementsPanel = ({ achievements, darkMode = true }) => {
         <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
           darkMode ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700'
         }`}>
-          {unlockedCount}/{achievements.length}
+          {unlockedCount}/{safeAchievements.length}
         </div>
       </div>
       
       {/* Achievement Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {achievements.map((achievement, index) => (
+        {safeAchievements.map((achievement, index) => (
           <AchievementCard
             key={achievement.id || index}
             achievement={achievement}

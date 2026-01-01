@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Clock, RefreshCw } from 'lucide-react';
 import { useQuestTimer } from '../hooks/useQuestTimer';
 
@@ -5,10 +6,12 @@ const QuestResetTimer = ({ resetType, onReset, darkMode = true }) => {
   const { formattedTime, shouldReset, resetComplete } = useQuestTimer(resetType);
   
   // Handle reset when timer expires
-  if (shouldReset && onReset) {
-    onReset();
-    resetComplete();
-  }
+  useEffect(() => {
+    if (shouldReset && onReset) {
+      onReset();
+      resetComplete();
+    }
+  }, [shouldReset, onReset, resetComplete]);
   
   // Label based on type
   const labels = {

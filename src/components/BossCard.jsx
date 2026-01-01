@@ -41,7 +41,7 @@ const BossCard = ({ boss, playerLevel, onChallenge, darkMode = true }) => {
         ${isDefeated 
           ? 'bg-gradient-to-br from-green-900/30 to-gray-900/50 border border-green-500/30' 
           : isUnlocked 
-            ? 'bg-gradient-to-br from-red-900/30 to-gray-900/50 border border-red-500/30 cursor-pointer' 
+            ? 'bg-gradient-to-br from-red-900/30 to-gray-900/50 border border-red-500/30' 
             : 'bg-gray-900/50 border border-gray-700/30 opacity-60'
         }
       `}
@@ -54,7 +54,6 @@ const BossCard = ({ boss, playerLevel, onChallenge, darkMode = true }) => {
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={() => isUnlocked && !isDefeated && onChallenge?.(boss)}
     >
       {/* Status Badge */}
       <div className="absolute -top-2 -right-2">
@@ -129,6 +128,7 @@ const BossCard = ({ boss, playerLevel, onChallenge, darkMode = true }) => {
       {/* Challenge Button */}
       {isUnlocked && !isDefeated && (
         <button
+          onClick={() => onChallenge?.(boss)}
           className="w-full mt-4 py-2 bg-gradient-to-r from-red-600 to-orange-500 text-white font-bold rounded-lg hover:from-red-500 hover:to-orange-400 transition-all"
         >
           ⚔️ Challenge Boss

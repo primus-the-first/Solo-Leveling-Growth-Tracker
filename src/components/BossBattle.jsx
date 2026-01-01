@@ -14,6 +14,7 @@ const DEFEAT_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
+  const validPlayerLevel = Math.max(1, Number(playerLevel) || 1);
   const [phase, setPhase] = useState('intro'); // 'intro' | 'battle' | 'victory'
   const [bossHP, setBossHP] = useState(boss?.hp || 100);
   const [playerHP, setPlayerHP] = useState(100);
@@ -25,6 +26,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
   const playerRef = useRef(null);
   const victoryRef = useRef(null);
   const particlesRef = useRef([]);
+  const counterAttackTimerRef = useRef(null);
   
   const maxBossHP = boss?.hp || 100;
   
@@ -44,16 +46,24 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
       }
       
       // Auto-transition to battle
-      setTimeout(() => setPhase('battle'), 1500);
+      const timer = setTimeout(() => setPhase('battle'), 1500);
+      return () => clearTimeout(timer);
     }
   }, [phase]);
   
   // Victory animation
+  // Victory animation
   useEffect(() => {
+    let tl;
+    let timer;
+    const bossNode = bossRef.current;
+    const victoryNode = victoryRef.current;
+    const particlesHelpers = particlesRef.current;
+
     if (phase === 'victory') {
       // Boss death animation
       if (bossRef.current) {
-        const tl = gsap.timeline();
+        tl = gsap.timeline();
         
         // Shake violently
         tl.to(bossRef.current, {
@@ -96,7 +106,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
       });
       
       // Show victory message
-      setTimeout(() => {
+      timer = setTimeout(() => {
         if (victoryRef.current) {
           gsap.fromTo(victoryRef.current,
             { scale: 0, opacity: 0 },
@@ -105,11 +115,21 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
         }
       }, 800);
     }
+
+    // Cleanup
+    return () => {
+      if (tl) tl.kill();
+      clearTimeout(timer);
+      if (bossNode) gsap.killTweensOf(bossNode);
+      if (victoryNode) gsap.killTweensOf(victoryNode);
+      if (particlesHelpers) gsap.killTweensOf(particlesHelpers);
+      if (counterAttackTimerRef.current) clearTimeout(counterAttackTimerRef.current);
+    };
   }, [phase]);
   
   // Attack handler
   const handleAttack = () => {
-    if (isAttacking || phase !== 'battle') return;
+    if (isAttacking || phase !== 'battle' || playerHP <= 0) return;
     
     setIsAttacking(true);
     
@@ -117,8 +137,8 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
     onAttack?.();
     
     // Calculate damage (based on player level)
-    const baseDamage = 15 + playerLevel * 2;
-    const variance = Math.floor(Math.random() * 10) - 5;
+    const baseDamage = 15 + validPlayerLevel * 2;
+    const variance = Math.floor(Math.random() * 11) - 5;
     const damage = Math.max(5, baseDamage + variance);
     
     // Animate attack
@@ -153,28 +173,35 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
         const newHP = Math.max(0, prev - damage);
         if (newHP === 0) {
           setTimeout(() => setPhase('victory'), 300);
+          setIsAttacking(false);
+        } else {
+          // Boss counter-attack
+          counterAttackTimerRef.current = setTimeout(() => {
+            if (phase !== 'battle') return;
+            
+            const bossDamage = Math.floor(10 + Math.random() * 15);
+            setPlayerHP(prev => {
+              const newHP = Math.max(0, prev - bossDamage);
+              if (newHP === 0) {
+                setPhase('defeat');
+                setIsAttacking(false);
+              }
+              return newHP;
+            });
+            
+            if (bossRef.current) {
+              gsap.to(bossRef.current, {
+                x: 20,
+                duration: 0.1,
+                yoyo: true,
+                repeat: 1,
+              });
+            }
+            setIsAttacking(false);
+          }, 400);
         }
         return newHP;
       });
-      
-      // Boss counter-attack
-      if (bossHP - damage > 0) {
-        setTimeout(() => {
-          const bossDamage = Math.floor(10 + Math.random() * 15);
-          setPlayerHP(prev => Math.max(0, prev - bossDamage));
-          
-          if (bossRef.current) {
-            gsap.to(bossRef.current, {
-              x: 20,
-              duration: 0.1,
-              yoyo: true,
-              repeat: 1,
-            });
-          }
-        }, 400);
-      }
-      
-      setIsAttacking(false);
     }, 150);
   };
   
@@ -302,6 +329,29 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
           </div>
         )}
         
+        {/* Defeat Overlay */}
+        {phase === 'defeat' && (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center z-20 animate-enter"
+          >
+            <div className="text-center p-8 rounded-2xl bg-gray-900/90 border-2 border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.3)]">
+              <Skull className="w-20 h-20 text-red-500 mx-auto mb-4" />
+              <h1 className="text-4xl font-bold text-red-500 mb-2 font-display">
+                DEFEAT
+              </h1>
+              <p className="text-gray-300 mb-6">
+                You were overwhelmed by {boss.name}.
+              </p>
+              <button
+                onClick={onClose}
+                className="px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-all border border-gray-500"
+              >
+                Retreat
+              </button>
+            </div>
+          </div>
+        )}
+        
         {/* Divider */}
         <div className="flex items-center justify-center my-6">
           <div className="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent flex-1" />
@@ -358,15 +408,14 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
             </p>
           )}
         </div>
-        
-        {/* Boss Requirements */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
-            💡 Complete boss tasks in real life to deal damage!
+            💡 Defeat the boss to earn rewards and level up!
           </p>
         </div>
+        </div>
       </div>
-    </div>
+
   );
 };
 

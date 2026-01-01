@@ -1,4 +1,5 @@
-import { TrendingUp, Flame, Clock, Sparkles } from 'lucide-react';
+import { TrendingUp, Flame, Sparkles } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 const MultiplierDisplay = ({ multiplier, streakDays, darkMode = true }) => {
   // Determine multiplier tier for styling
@@ -99,3 +100,9 @@ const MultiplierDisplay = ({ multiplier, streakDays, darkMode = true }) => {
 };
 
 export default MultiplierDisplay;
+
+MultiplierDisplay.propTypes = {
+  multiplier: PropTypes.number.isRequired,
+  streakDays: PropTypes.number,
+  darkMode: PropTypes.bool,
+};
