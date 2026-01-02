@@ -94,6 +94,7 @@ const OnboardingFlow = ({ onComplete }) => {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const popupRef = useRef(null);
   const inputRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   const step = ONBOARDING_STEPS[currentStep];
 
@@ -141,6 +142,18 @@ const OnboardingFlow = ({ onComplete }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, answers, summaryText, user]);
 
+  // Cleanup timers and animations on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (popupRef.current) {
+        gsap.killTweensOf(popupRef.current);
+      }
+    };
+  }, []);
+
   // Show loading while checking auth
   if (loading) {
     return (
@@ -169,7 +182,7 @@ const OnboardingFlow = ({ onComplete }) => {
         setShowLoading(true);
         
         // Wait 2 seconds before showing next alert
-        setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
           setShowLoading(false);
           
           if (currentStep < ONBOARDING_STEPS.length - 1) {

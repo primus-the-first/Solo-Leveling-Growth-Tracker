@@ -84,6 +84,7 @@ Generated quests:
 | Meditate 10 min | Spiritual Growth | 20 |
 | Track spending | Financial Freedom | 20 |
 | Code practice 30 min | Career & Skills | 20 |
+| Read book chapter | Knowledge & Learning | 20 |
 
 **Weekly Quests:**
 | Quest | Pillar | XP |
@@ -101,3 +102,4 @@ Generated quests:
 | Save $500 | Financial Freedom | 200 |
 | Complete project milestone | Career & Skills | 200 |
 | Monthly journal entry | Spiritual Growth | 200 |
+| Achieve 20 workout days | Personal & Discipline | 200 |

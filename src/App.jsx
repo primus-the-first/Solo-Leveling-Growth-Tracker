@@ -40,12 +40,15 @@ import {
   saveToFirestore,
   loadFromFirestore,
 } from './gameState';
+import OnboardingFlow from './components/OnboardingFlow';
 
 // Main Dashboard Component (was App)
 function Dashboard() {
   // Auth state
   const { user } = useAuth();
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [dataError, setDataError] = useState(null);
   
   // Preloader State
   const [showPreloader, setShowPreloader] = useState(true);
@@ -195,33 +198,59 @@ function Dashboard() {
   // ============ FIRESTORE CLOUD SYNC ============
   
   // Load data from Firestore when user logs in
+  // Load data from Firestore when user logs in
   useEffect(() => {
+    let isMounted = true;
+
     const loadUserData = async () => {
-      if (user && !isDataLoaded) {
-        const cloudData = await loadFromFirestore(user.uid);
-        if (cloudData) {
-          // Load cloud data into state
-          if (cloudData.player) setPlayer(cloudData.player);
-          if (cloudData.pillars) setPillars(cloudData.pillars);
-          if (cloudData.dailyQuests) setDailyQuests(cloudData.dailyQuests);
-          if (cloudData.weeklyQuests) setWeeklyQuests(cloudData.weeklyQuests);
-          if (cloudData.monthlyQuests) setMonthlyQuests(cloudData.monthlyQuests);
-          if (cloudData.bossBattles) setBossBattles(cloudData.bossBattles);
-          if (cloudData.achievements) setAchievements(cloudData.achievements);
-          if (cloudData.journal) setJournal(cloudData.journal);
-          if (cloudData.history) setHistory(cloudData.history);
+      if (user && !isDataLoaded && !dataLoading) {
+        setDataLoading(true);
+        setDataError(null);
+        try {
+          const cloudData = await loadFromFirestore(user.uid);
+          
+          if (!isMounted) return;
+
+          if (cloudData) {
+            // Load cloud data into state
+            if (cloudData.player) setPlayer(cloudData.player);
+            if (cloudData.pillars) setPillars(cloudData.pillars);
+            if (cloudData.dailyQuests) setDailyQuests(cloudData.dailyQuests);
+            if (cloudData.weeklyQuests) setWeeklyQuests(cloudData.weeklyQuests);
+            if (cloudData.monthlyQuests) setMonthlyQuests(cloudData.monthlyQuests);
+            if (cloudData.bossBattles) setBossBattles(cloudData.bossBattles);
+            if (cloudData.achievements) setAchievements(cloudData.achievements);
+            if (cloudData.journal) setJournal(cloudData.journal);
+            if (cloudData.history) setHistory(cloudData.history);
+          }
+          setIsDataLoaded(true);
+        } catch (error) {
+          if (isMounted) {
+            console.error('Failed to load user data:', error);
+            setDataError('Failed to sync. Please refresh.');
+          }
+        } finally {
+          if (isMounted) {
+            setDataLoading(false);
+          }
         }
-        setIsDataLoaded(true);
       }
     };
     loadUserData();
-  }, [user, isDataLoaded]);
+
+    return () => { isMounted = false; };
+  }, [user, isDataLoaded, dataLoading]);
+
+
 
   // Auto-save to Firestore when game state changes (debounced)
   useEffect(() => {
     if (!user || !isDataLoaded) return;
     
-    const saveTimeout = setTimeout(() => {
+    // Capture UID to avoid stale closure issues in timeout
+    const uid = user.uid;
+
+    const saveTimeout = setTimeout(async () => {
       const gameData = {
         player,
         pillars,
@@ -233,7 +262,13 @@ function Dashboard() {
         journal,
         history
       };
-      saveToFirestore(user.uid, gameData);
+      
+      try {
+        await saveToFirestore(uid, gameData);
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+        // Optionally notify user via toast or UI indicator
+      }
     }, 2000); // Debounce 2 seconds
     
     return () => clearTimeout(saveTimeout);
@@ -809,6 +844,8 @@ function Dashboard() {
       {/* Content Container */}
       <div className="max-w-5xl mx-auto relative z-10">
         <Header 
+          player={player}
+          loading={!isDataLoaded}
           darkMode={darkMode} 
           onOpenSettings={() => setShowSettings(true)}
         />
@@ -834,17 +871,10 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/onboarding" element={<OnboardingWrapper />} />
+      <Route path="/onboarding" element={<OnboardingFlow />} />
       <Route path="/app" element={<Dashboard />} />
     </Routes>
   );
-}
-
-// Wrapper for onboarding that handles completion
-import OnboardingFlow from './components/OnboardingFlow';
-
-function OnboardingWrapper() {
-  return <OnboardingFlow />;
 }
 
 export default App;

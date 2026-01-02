@@ -1,35 +1,18 @@
-import { useLayoutEffect, useRef, useState, useEffect } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Sparkles, Zap, Settings } from 'lucide-react';
 import gsap from 'gsap';
 import { useAuth } from '../context/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
 
-const Header = ({ darkMode, onOpenSettings }) => {
+const Header = ({ player, loading, darkMode, onOpenSettings }) => {
   const { user } = useAuth();
-  const [hunterName, setHunterName] = useState('Hunter');
+  const hunterName = player?.name || user?.displayName || 'Hunter';
+  
   const titleRef = useRef(null);
   const subtitleRef = useRef(null);
   const badgeRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Load hunter name from Firestore
-  useEffect(() => {
-    const loadHunterName = async () => {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists() && userDoc.data().hunterName) {
-            setHunterName(userDoc.data().hunterName);
-          }
-        } catch (error) {
-          console.error('Failed to load hunter name:', error);
-        }
-      }
-    };
-    loadHunterName();
-  }, [user]);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -76,7 +59,11 @@ const Header = ({ darkMode, onOpenSettings }) => {
         className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-wider mb-3 gradient-text animate-enter uppercase"
         style={{ fontFamily: 'Cinzel, serif' }}
       >
-        {hunterName}
+        {loading ? (
+          <span className="animate-pulse opacity-70">Loading...</span>
+        ) : (
+          hunterName
+        )}
       </h1>
       
       {/* Subtitle */}
@@ -113,7 +100,8 @@ const Header = ({ darkMode, onOpenSettings }) => {
 export default Header;
 
 Header.propTypes = {
+  player: PropTypes.object,
+  loading: PropTypes.bool,
   darkMode: PropTypes.bool.isRequired,
-  setDarkMode: PropTypes.func.isRequired,
   onOpenSettings: PropTypes.func.isRequired,
 };

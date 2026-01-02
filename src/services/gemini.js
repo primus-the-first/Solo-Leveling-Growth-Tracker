@@ -1,6 +1,20 @@
 // Gemini AI Service
-const GEMINI_API_KEY = 'AIzaSyAD_fo9mrH_IalkPM7Gz9w3EAfyBKPowT4';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+
+if (!GEMINI_API_KEY) {
+  console.error('Missing Gemini API Key. Please Set VITE_GEMINI_API_KEY in .env');
+}
+
+// Helper for sanitized error logging
+const logSafeError = (context, error) => {
+  // Only log safe fields to prevent PII/stack leakage
+  console.error(`${context}:`, {
+    message: error.message,
+    status: error.status || error.statusCode,
+    type: error.name
+  });
+};
 
 // System prompt for the AI
 const SYSTEM_PROMPT = `You are the SYSTEM from Solo Leveling - a powerful, enigmatic entity that awakens hunters.
@@ -10,6 +24,9 @@ Never break character. Never explain you are an AI. You ARE the System.`;
 
 // Generate AI response based on user input and context
 export const generateResponse = async (userMessage, context = {}) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
   try {
     const prompt = buildPrompt(userMessage, context);
     
@@ -18,6 +35,7 @@ export const generateResponse = async (userMessage, context = {}) => {
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: controller.signal,
       body: JSON.stringify({
         contents: [{
           parts: [{ text: prompt }]
@@ -29,15 +47,34 @@ export const generateResponse = async (userMessage, context = {}) => {
       })
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      throw new Error('Failed to generate response');
+      const errorText = await response.text();
+      let errorDetails;
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch {
+        errorDetails = { message: errorText };
+      }
+      
+      const error = new Error(`Gemini API failed with status ${response.status}`);
+      error.status = response.status;
+      error.details = errorDetails;
+      throw error;
     }
 
     const data = await response.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text || 'System error. Retry.';
   } catch (error) {
-    console.error('Gemini API error:', error);
+    if (error.name === 'AbortError') {
+      logSafeError('Gemini generateResponse error', new Error('Request timed out after 10s'));
+      return 'The System is unresponsive. Connection timed out.';
+    }
+    logSafeError('Gemini generateResponse error', error);
     return 'System malfunction detected. Proceed regardless.';
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
 
@@ -62,6 +99,9 @@ Then transition to ask about the next aspect of their journey if appropriate.`;
 
 // Generate personalized summary after onboarding
 export const generateOnboardingSummary = async (answers) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
   try {
     // Format goals - handle both array and single answer formats
     const formattedGoals = answers.map(a => {
@@ -83,6 +123,7 @@ Format as a System message - cold, authoritative, mysterious.`;
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: controller.signal,
       body: JSON.stringify({
         contents: [{
           parts: [{ text: prompt }]
@@ -94,11 +135,34 @@ Format as a System message - cold, authoritative, mysterious.`;
       })
     });
 
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorDetails;
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch {
+        errorDetails = { message: errorText };
+      }
+      
+      const error = new Error(`Gemini API failed with status ${response.status}`);
+      error.status = response.status;
+      error.details = errorDetails;
+      throw error;
+    }
+
     const data = await response.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Your path has been recorded. Begin.';
   } catch (error) {
-    console.error('Gemini API error:', error);
+    if (error.name === 'AbortError') {
+      logSafeError('Gemini generateOnboardingSummary error', new Error('Request timed out after 10s'));
+      return 'The System was too slow to respond. Your path is recorded silently.';
+    }
+    logSafeError('Gemini generateOnboardingSummary error', error);
     return 'Your path has been recorded. The System watches. Begin.';
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
 

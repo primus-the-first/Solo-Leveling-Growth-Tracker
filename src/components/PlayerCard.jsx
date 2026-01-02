@@ -29,26 +29,9 @@ const getRank = (level) => {
 
 const PlayerCard = ({ player, darkMode }) => {
   const { user } = useAuth();
-  const [hunterName, setHunterName] = useState(player.name);
+  const hunterName = player?.name || user?.displayName || 'Hunter';
   const cardRef = useRef(null);
   const xpBarRef = useRef(null);
-  
-  // Load hunter name from Firestore
-  useEffect(() => {
-    const loadHunterName = async () => {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists() && userDoc.data().hunterName) {
-            setHunterName(userDoc.data().hunterName);
-          }
-        } catch (error) {
-          console.error('Failed to load hunter name:', error);
-        }
-      }
-    };
-    loadHunterName();
-  }, [user]);
   
   // Calculate XP progress for current level
   const currentLevelXP = getCurrentLevelXP(player.level);

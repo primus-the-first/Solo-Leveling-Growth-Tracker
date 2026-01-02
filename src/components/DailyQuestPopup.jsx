@@ -12,11 +12,15 @@ const DailyQuestPopup = ({
   const [displayedText, setDisplayedText] = useState('');
   const [showPenalty, setShowPenalty] = useState(false);
   
-  // Check if there are incomplete quests from yesterday
-  const today = new Date().toDateString();
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
-  const missedQuests = lastVisitDate && lastVisitDate !== today && lastVisitDate === yesterday;
-  const incompleteCount = dailyQuests.filter(q => !q.completed).length;
+  // Check if there are incomplete quests from previous days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const lastVisit = lastVisitDate ? new Date(lastVisitDate) : today;
+  if (lastVisitDate) lastVisit.setHours(0, 0, 0, 0);
+  
+  const missedQuests = lastVisitDate && lastVisit < today;
+  const incompleteCount = (dailyQuests || []).filter(q => !q.completed).length;
   
   // Determine message based on situation
   const getMessage = () => {
@@ -54,7 +58,7 @@ const DailyQuestPopup = ({
       if (missedQuests && incompleteCount > 0 && onApplyPenalty) {
         onApplyPenalty(incompleteCount);
       }
-      onAccept();
+      if (onAccept) onAccept();
     }, 500);
   };
 
@@ -78,10 +82,14 @@ const DailyQuestPopup = ({
           bg-gradient-to-b ${isPenaltyMode ? 'from-red-900/90 to-red-950/95' : 'from-blue-900/90 to-blue-950/95'}
           border-2 ${isPenaltyMode ? 'border-red-500/80' : 'border-blue-500/80'}
           rounded-lg overflow-hidden
-          shadow-[0_0_40px_${isPenaltyMode ? 'rgba(239,68,68,0.4)' : 'rgba(59,130,246,0.4)'},inset_0_0_20px_${isPenaltyMode ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)'}]
-          transform transition-all duration-500
+          transition-all duration-500
           ${isFadingOut ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}
         `}
+        style={{
+          boxShadow: isPenaltyMode 
+            ? '0 0 40px rgba(239,68,68,0.4), inset 0 0 20px rgba(239,68,68,0.1)' 
+            : '0 0 40px rgba(59,130,246,0.4), inset 0 0 20px rgba(59,130,246,0.1)'
+        }}
       >
         {/* Top Border Glow */}
         <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent ${isPenaltyMode ? 'via-red-400' : 'via-blue-400'} to-transparent opacity-80`} />
@@ -157,7 +165,7 @@ const DailyQuestPopup = ({
               rounded
               ${isPenaltyMode ? 'text-red-100' : 'text-blue-100'} font-display text-lg tracking-widest uppercase
               transition-all duration-300
-              hover:shadow-[0_0_20px_${isPenaltyMode ? 'rgba(239,68,68,0.5)' : 'rgba(59,130,246,0.5)'}]
+              ${isPenaltyMode ? 'hover:shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]'}
               active:scale-95
             `}
           >

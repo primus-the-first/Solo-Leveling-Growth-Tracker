@@ -366,15 +366,66 @@ export const loadFromFirestore = async (userId) => {
     const docRef = doc(db, 'users', userId, 'gameData', 'current');
     const docSnap = await getDoc(docRef);
     
-    if (docSnap.exists()) {
-      const data = docSnap.data();
+    let data = docSnap.exists() ? docSnap.data() : null;
+    
+    // Check if the current game data document itself has a top-level hunterName
+    // (This covers the case where the user might have saved the name directly to gameData/current)
+    if (data && data.hunterName) {
+       if (!data.player) data.player = JSON.parse(JSON.stringify(DEFAULT_PLAYER));
+       data.player.name = data.hunterName;
+    }
+
+    // Check for hunterName in the root user document (set during onboarding)
+    // This ensures we get the correct name even if gameData/current hasn't been created yet
+    // Check for hunterName in gameData/onboarding first (custom collection)
+    // Then check root user document as fallback
+    try {
+      let profileName = null;
+      
+      // Check onboarding doc
+      const onboardingRef = doc(db, 'users', userId, 'gameData', 'onboarding');
+      const onboardingSnap = await getDoc(onboardingRef);
+      
+      if (onboardingSnap.exists()) {
+        const onboardingData = onboardingSnap.data();
+        if (onboardingData?.hunterName) {
+          profileName = onboardingData.hunterName;
+        }
+      } 
+      
+      if (!profileName) {
+        // Fallback to root doc
+        const userDocRef = doc(db, 'users', userId);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData?.hunterName) {
+            profileName = userData.hunterName;
+          }
+        }
+      }
+
+      if (profileName) {
+        // console.log('Found Hunter Name:', profileName); // Logic verified. Keeping logs clean.
+        if (!data) data = {};
+        if (!data.player) {
+          data.player = JSON.parse(JSON.stringify(DEFAULT_PLAYER));
+        }
+        data.player.name = profileName;
+      }
+    } catch (err) {
+      // Sanitize log: don't dump the full error object likely containing tokens/paths
+      console.warn('Profile sync warning:', err.code || err.message || 'Unknown error');
+    }
+    
+    if (data) {
       // Remove Firestore metadata
-      delete data.lastSaved;
+      if (data.lastSaved) delete data.lastSaved;
       return data;
     }
     return null;
   } catch (e) {
-    console.error('Failed to load from Firestore:', e);
+    console.error('Failed to load from Firestore:', e.code || e.message);
     return null;
   }
 };
