@@ -7,8 +7,16 @@
  * @param {object} context - { player, dailyQuests, weeklyQuests, monthlyQuests, pillars, bossBattles, achievements }
  * @returns {string} The System's response
  */
-export const generateSystemResponse = (query, context) => {
-  const { player, dailyQuests, weeklyQuests, monthlyQuests, pillars, bossBattles, achievements } = context;
+export const generateSystemResponse = (query = '', context = {}) => {
+  const { 
+    player = {}, 
+    dailyQuests = [], 
+    weeklyQuests = [], 
+    monthlyQuests = [], 
+    pillars = {}, 
+    bossBattles = [], 
+    achievements = [] 
+  } = context;
   
   const intent = detectIntent(query);
   
@@ -112,9 +120,9 @@ const getStatusResponse = (player, dailyQuests) => {
 ${completedToday === totalToday ? 'All daily quests complete. Exemplary performance.' : `${totalToday - completedToday} quests remain. Do not falter.`}`;
 };
 
-const getStreakResponse = (player) => {
-  const { streaks, xpMultiplier } = player;
-  const { daily, longestDaily } = streaks;
+const getStreakResponse = (player = {}) => {
+  const { streaks = {}, xpMultiplier = 1 } = player;
+  const { daily = 0, longestDaily = 0 } = streaks;
   
   if (daily === 0) {
     return 'Your streak stands at zero. The path to power requires daily discipline. Begin today.';
@@ -225,10 +233,13 @@ Challenge when ready.`;
   return response;
 };
 
-const getPillarResponse = (pillars) => {
+const getPillarResponse = (pillars = {}) => {
   const pillarArray = Object.values(pillars);
-  const lowestPillar = pillarArray.reduce((min, p) => p.level < min.level ? p : min);
-  const highestPillar = pillarArray.reduce((max, p) => p.level > max.level ? p : max);
+  if (pillarArray.length === 0) {
+    return 'No pillars found. Your skill pillars have not been initialized yet.';
+  }
+  const lowestPillar = pillarArray.reduce((min, p) => (p?.level ?? 1) < (min?.level ?? 1) ? p : min, pillarArray[0]);
+  const highestPillar = pillarArray.reduce((max, p) => (p?.level ?? 1) > (max?.level ?? 1) ? p : max, pillarArray[0]);
   
   let response = `PILLAR ANALYSIS:
 

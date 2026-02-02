@@ -50,8 +50,11 @@ const QuestEditor = ({ quests, setQuests, questType = 'daily', darkMode = true }
   const handleAdd = () => {
     if (!editForm.task?.trim()) return;
 
+    // Generate collision-resistant ID: timestamp + random suffix
+    const generateQuestId = () => `quest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     const newQuest = {
-      id: Date.now(),
+      id: generateQuestId(),
       task: editForm.task.trim(),
       xp: parseInt(editForm.xp) || 20,
       pillar: editForm.pillar || 'personal',

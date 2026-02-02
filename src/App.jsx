@@ -238,8 +238,10 @@ function Dashboard() {
           }
           setIsDataLoaded(true);
 
-          // Check and update streaks after loading data
-          updateStreaks();
+          // Check and update streaks after loading data - pass loaded quests to avoid stale state
+          if (cloudData?.dailyQuests) {
+            updateStreaks(cloudData.dailyQuests);
+          }
         } catch (error) {
           if (isMounted) {
             console.error('Failed to load user data:', error);
@@ -434,9 +436,10 @@ function Dashboard() {
   // ============ QUEST RESET HANDLERS ============
 
   const resetDailyQuests = () => {
-    setDailyQuests(prev => prev.map(q => ({ ...q, completed: false })));
-    // Update streaks when daily quests reset
-    updateStreaks();
+    const newQuests = dailyQuests.map(q => ({ ...q, completed: false }));
+    setDailyQuests(newQuests);
+    // Update streaks with the new quest state to avoid stale state
+    updateStreaks(newQuests);
   };
 
   const resetWeeklyQuests = () => {
@@ -451,15 +454,19 @@ function Dashboard() {
   
   // Check and update streaks (call this on app load/day change)
   // eslint-disable-next-line no-unused-vars
-  const updateStreaks = () => {
-    // const today = new Date().toISOString().split('T')[0];
+  const updateStreaks = (questsOverride) => {
+    // Use provided quests or fall back to current state
+    const quests = questsOverride || dailyQuests;
     // eslint-disable-next-line no-unused-vars
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     
-    // Check if all daily quests were completed yesterday
-    const allDailyCompleted = dailyQuests.every(q => q.completed);
+    // Check if all daily quests were completed
+    const allDailyCompleted = quests.every(q => q.completed);
     
-    if (allDailyCompleted) {
+    if (allDailyCompleted && quests.length > 0) {
+      // Track bonus info to apply after setPlayer
+      let streakBonusInfo = null;
+      
       setPlayer(prev => {
         const newStreak = prev.streaks.daily + 1;
         const longestDaily = Math.max(prev.streaks.longestDaily, newStreak);
@@ -468,21 +475,12 @@ function Dashboard() {
         let xpMultiplier = prev.xpMultiplier;
         if (STREAK_BONUSES[newStreak]) {
           xpMultiplier = STREAK_BONUSES[newStreak].multiplier;
-
-          // Add bonus XP notification
-          const bonusXP = STREAK_BONUSES[newStreak].xp;
-          addXP(bonusXP);
-          showXPToast(bonusXP, 'streak');
-
-          // Show celebration for major milestones
-          if (newStreak === 7 || newStreak === 30 || newStreak === 100) {
-            setLevelUpModal({
-              visible: true,
-              level: prev.level,
-              title: `${newStreak} Day Streak!`,
-              xpBonus: bonusXP,
-            });
-          }
+          // Store bonus info to apply outside setPlayer
+          streakBonusInfo = {
+            bonusXP: STREAK_BONUSES[newStreak].xp,
+            newStreak,
+            level: prev.level
+          };
         }
         
         return {
@@ -495,6 +493,25 @@ function Dashboard() {
           }
         };
       });
+      
+      // Apply bonuses outside setPlayer to avoid nested state updates
+      // Use setTimeout to ensure setPlayer has completed
+      if (streakBonusInfo) {
+        setTimeout(() => {
+          addXP(streakBonusInfo.bonusXP);
+          showXPToast(streakBonusInfo.bonusXP, 'streak');
+          
+          // Show celebration for major milestones
+          if (streakBonusInfo.newStreak === 7 || streakBonusInfo.newStreak === 30 || streakBonusInfo.newStreak === 100) {
+            setLevelUpModal({
+              visible: true,
+              level: streakBonusInfo.level,
+              title: `${streakBonusInfo.newStreak} Day Streak!`,
+              xpBonus: streakBonusInfo.bonusXP,
+            });
+          }
+        }, 0);
+      }
     }
   };
 

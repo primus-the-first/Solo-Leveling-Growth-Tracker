@@ -69,16 +69,18 @@ export const getCurrentLevelXP = (currentLevel) => {
 
 // Calculate scaled boss HP based on player level
 export const calculateBossHP = (boss, playerLevel) => {
-  const baseHP = boss.baseHP || boss.hp || 100;
-  const scaling = boss.hpScaling || 10;
-  return baseHP + (playerLevel * scaling);
+  if (!boss) return 100; // Safe default if boss is null/undefined
+  const baseHP = boss.baseHP ?? boss.hp ?? 100;
+  const scaling = boss.hpScaling ?? 10;
+  return baseHP + ((playerLevel || 1) * scaling);
 };
 
 // Calculate pillar stats based on level and XP
 export const calculatePillarStats = (pillar) => {
+  if (!pillar) return []; // Safe default if pillar is null/undefined
   const level = pillar.level || 1;
   const xp = pillar.xp || 0;
-  const baseStats = DEFAULT_PILLARS[pillar.id]?.stats || [];
+  const baseStats = DEFAULT_PILLARS[pillar?.id]?.stats || [];
 
   const levelBoost = (level - 1) * 1;
   const xpBoost = Math.floor(xp / 10) * 0.1;

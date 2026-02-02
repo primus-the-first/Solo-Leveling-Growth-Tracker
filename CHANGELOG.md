@@ -287,7 +287,7 @@ Full implementation plan documented in:
 
 - **Bugs Fixed:** 6/6
 - **Features Added:** 4/4
-- **New Files:** 1 (QuestEditor.jsx)
+- **New Files:** 4 (QuestEditor.jsx, systemResponses.js, SystemWindow.jsx, SystemButton.jsx)
 - **Modified Files:** 6
 - **Lines Added:** ~400+
 - **Plan Document:** 1,200+ lines

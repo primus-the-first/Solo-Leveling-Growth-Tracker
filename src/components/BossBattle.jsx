@@ -17,7 +17,7 @@ const DEFEAT_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
 const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
   const validPlayerLevel = Math.max(1, Number(playerLevel) || 1);
   const [phase, setPhase] = useState('intro'); // 'intro' | 'battle' | 'victory'
-  const [bossHP, setBossHP] = useState(() => calculateBossHP(boss, validPlayerLevel));
+  const [bossHP, setBossHP] = useState(() => boss ? calculateBossHP(boss, validPlayerLevel) : 100);
   const [playerHP, setPlayerHP] = useState(100);
   const [isAttacking, setIsAttacking] = useState(false);
   const [damageText, setDamageText] = useState(null);
@@ -29,7 +29,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
   const particlesRef = useRef([]);
   const counterAttackTimerRef = useRef(null);
 
-  const maxBossHP = calculateBossHP(boss, validPlayerLevel);
+  const maxBossHP = boss ? calculateBossHP(boss, validPlayerLevel) : 100;
   
   // Intro animation
   useEffect(() => {

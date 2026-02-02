@@ -25,8 +25,8 @@ const SystemWindow = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const getInitialGreeting = (playerData) => {
-    const { level, name, title } = playerData;
+  const getInitialGreeting = (playerData = {}) => {
+    const { level = 1, name = 'Hunter', title = 'Awakened' } = playerData;
     if (level < 5) {
       return `Awakened Hunter ${name}. The System acknowledges your presence. How may I guide your ascension?`;
     } else if (level < 15) {
