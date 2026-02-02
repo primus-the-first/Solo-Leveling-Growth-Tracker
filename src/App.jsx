@@ -21,6 +21,8 @@ import BossBattle from './components/BossBattle';
 import BossCard from './components/BossCard';
 import AchievementsPanel from './components/AchievementsPanel';
 import JournalPanel from './components/JournalPanel';
+import QuestEditor from './components/QuestEditor';
+import SystemWindow from './components/SystemWindow';
 import SoundToggle from './components/SoundToggle';
 import useSounds from './hooks/useSounds';
 import { useAuth } from './context/AuthContext';
@@ -97,7 +99,7 @@ function Dashboard() {
   const [bossBattles, setBossBattles] = useState(() => loadState('bossBattles', DEFAULT_BOSS_BATTLES));
   
   // Achievements
-  // eslint-disable-next-line no-unused-vars
+
   const [achievements, setAchievements] = useState(() => loadState('achievements', DEFAULT_ACHIEVEMENTS));
   
   // Journal
@@ -105,6 +107,12 @@ function Dashboard() {
   
   // History for Calendar
   const [history, setHistory] = useState(() => loadState('history', {}));
+
+  // Quest Editor Mode
+  const [editMode, setEditMode] = useState(false);
+
+  // System Window State
+  const [showSystemWindow, setShowSystemWindow] = useState(false);
 
   // ============ PENALTY SYSTEM ============
   
@@ -213,7 +221,12 @@ function Dashboard() {
 
           if (cloudData) {
             // Load cloud data into state
-            if (cloudData.player) setPlayer(cloudData.player);
+            if (cloudData.player) {
+              setPlayer(prev => ({
+                ...prev,
+                ...cloudData.player
+              }));
+            }
             if (cloudData.pillars) setPillars(cloudData.pillars);
             if (cloudData.dailyQuests) setDailyQuests(cloudData.dailyQuests);
             if (cloudData.weeklyQuests) setWeeklyQuests(cloudData.weeklyQuests);
@@ -224,6 +237,9 @@ function Dashboard() {
             if (cloudData.history) setHistory(cloudData.history);
           }
           setIsDataLoaded(true);
+
+          // Check and update streaks after loading data
+          updateStreaks();
         } catch (error) {
           if (isMounted) {
             console.error('Failed to load user data:', error);
@@ -355,19 +371,24 @@ function Dashboard() {
         });
       }, 1000);
     }
-    
+
     setActiveBattle(null);
+
+    // Check for boss achievement
+    setTimeout(() => checkAchievements(), 500);
   };
 
   // ============ QUEST HANDLERS ============
   
   const toggleDailyQuest = (id) => {
-    setDailyQuests(prev => 
+    setDailyQuests(prev =>
       prev.map(quest => {
         if (quest.id === id) {
           if (!quest.completed) {
             addXP(quest.xp, quest.pillar);
             playQuestComplete();
+            // Check achievements after quest completion
+            setTimeout(() => checkAchievements(), 100);
           }
           return { ...quest, completed: !quest.completed };
         }
@@ -377,12 +398,14 @@ function Dashboard() {
   };
 
   const toggleWeeklyQuest = (id) => {
-    setWeeklyQuests(prev => 
+    setWeeklyQuests(prev =>
       prev.map(quest => {
         if (quest.id === id) {
           if (!quest.completed) {
             addXP(quest.xp, quest.pillar);
             playQuestComplete();
+            // Check achievements after quest completion
+            setTimeout(() => checkAchievements(), 100);
           }
           return { ...quest, completed: !quest.completed };
         }
@@ -392,18 +415,36 @@ function Dashboard() {
   };
 
   const toggleMonthlyQuest = (id) => {
-    setMonthlyQuests(prev => 
+    setMonthlyQuests(prev =>
       prev.map(quest => {
         if (quest.id === id) {
           if (!quest.completed) {
             addXP(quest.xp, quest.pillar);
             playQuestComplete();
+            // Check achievements after quest completion
+            setTimeout(() => checkAchievements(), 100);
           }
           return { ...quest, completed: !quest.completed };
         }
         return quest;
       })
     );
+  };
+
+  // ============ QUEST RESET HANDLERS ============
+
+  const resetDailyQuests = () => {
+    setDailyQuests(prev => prev.map(q => ({ ...q, completed: false })));
+    // Update streaks when daily quests reset
+    updateStreaks();
+  };
+
+  const resetWeeklyQuests = () => {
+    setWeeklyQuests(prev => prev.map(q => ({ ...q, completed: false })));
+  };
+
+  const resetMonthlyQuests = () => {
+    setMonthlyQuests(prev => prev.map(q => ({ ...q, completed: false })));
   };
 
   // ============ STREAK SYSTEM ============
@@ -427,7 +468,21 @@ function Dashboard() {
         let xpMultiplier = prev.xpMultiplier;
         if (STREAK_BONUSES[newStreak]) {
           xpMultiplier = STREAK_BONUSES[newStreak].multiplier;
-          // TODO: Add bonus XP notification
+
+          // Add bonus XP notification
+          const bonusXP = STREAK_BONUSES[newStreak].xp;
+          addXP(bonusXP);
+          showXPToast(bonusXP, 'streak');
+
+          // Show celebration for major milestones
+          if (newStreak === 7 || newStreak === 30 || newStreak === 100) {
+            setLevelUpModal({
+              visible: true,
+              level: prev.level,
+              title: `${newStreak} Day Streak!`,
+              xpBonus: bonusXP,
+            });
+          }
         }
         
         return {
@@ -442,6 +497,63 @@ function Dashboard() {
       });
     }
   };
+
+  // ============ ACHIEVEMENT SYSTEM ============
+
+  const checkAchievements = useCallback(() => {
+    setAchievements(prev => prev.map(achievement => {
+      if (achievement.unlocked) return achievement;
+
+      let shouldUnlock = false;
+      let newProgress = achievement.progress;
+
+      switch (achievement.id) {
+        case 'first-quest': {
+          const anyQuestComplete = dailyQuests.some(q => q.completed) ||
+                                  weeklyQuests.some(q => q.completed) ||
+                                  monthlyQuests.some(q => q.completed);
+          shouldUnlock = anyQuestComplete;
+          newProgress = anyQuestComplete ? 100 : 0;
+          break;
+        }
+
+        case 'week-warrior':
+          shouldUnlock = player.streaks.daily >= 7;
+          newProgress = Math.min((player.streaks.daily / 7) * 100, 100);
+          break;
+
+        case 'month-master':
+          shouldUnlock = player.streaks.daily >= 30;
+          newProgress = Math.min((player.streaks.daily / 30) * 100, 100);
+          break;
+
+        case 'shadow-slayer': {
+          const anyBossDefeated = bossBattles.some(b => b.defeated);
+          shouldUnlock = anyBossDefeated;
+          newProgress = anyBossDefeated ? 100 : 0;
+          break;
+        }
+
+        case 'penalty-survivor':
+          shouldUnlock = player.penalties.missedDays > 0 && !player.penalties.active;
+          newProgress = shouldUnlock ? 100 : 0;
+          break;
+
+        default:
+          break;
+      }
+
+      if (shouldUnlock) {
+        addXP(achievement.xp);
+        showXPToast(achievement.xp, 'achievement');
+        return { ...achievement, unlocked: true, progress: 100 };
+      } else if (newProgress !== achievement.progress) {
+        return { ...achievement, progress: newProgress };
+      }
+
+      return achievement;
+    }));
+  }, [dailyQuests, weeklyQuests, monthlyQuests, player.streaks.daily, player.penalties, bossBattles, addXP, showXPToast]);
 
   // ============ PENALTY HANDLERS ============
   
@@ -512,6 +624,9 @@ function Dashboard() {
       
       // Reset recovery quests for next time
       setRecoveryQuests(prev => prev.map(q => ({ ...q, completed: false })));
+
+      // Check for penalty survivor achievement
+      setTimeout(() => checkAchievements(), 100);
     }
   };
 
@@ -545,31 +660,54 @@ function Dashboard() {
           <div className="glass-card p-6 rounded-2xl max-w-2xl mx-auto animate-enter">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold gradient-text">Daily Quests</h2>
-              <div className="xp-badge">
-                {dailyQuests.filter(q => q.completed).length}/{dailyQuests.length} Complete
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setEditMode(!editMode)}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+                    editMode
+                      ? 'bg-cyan-500 text-white'
+                      : darkMode
+                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  }`}
+                >
+                  {editMode ? 'Done' : 'Edit Quests'}
+                </button>
+                <div className="xp-badge">
+                  {dailyQuests.filter(q => q.completed).length}/{dailyQuests.length} Complete
+                </div>
               </div>
             </div>
-            
+
             {/* Reset Timer */}
             <div className="mb-6">
-              <QuestResetTimer 
-                resetType="daily" 
-                onReset={() => setDailyQuests(DEFAULT_DAILY_QUESTS)}
+              <QuestResetTimer
+                resetType="daily"
+                onReset={resetDailyQuests}
                 darkMode={darkMode}
               />
             </div>
-            
-            <div className="space-y-3">
-              {dailyQuests.map(quest => (
-                <QuestItem 
-                  key={quest.id}
-                  quest={quest}
-                  onToggle={toggleDailyQuest}
-                  variant="daily"
-                  darkMode={darkMode}
-                />
-              ))}
-            </div>
+
+            {editMode ? (
+              <QuestEditor
+                quests={dailyQuests}
+                setQuests={setDailyQuests}
+                questType="daily"
+                darkMode={darkMode}
+              />
+            ) : (
+              <div className="space-y-3">
+                {dailyQuests.map(quest => (
+                  <QuestItem
+                    key={quest.id}
+                    quest={quest}
+                    onToggle={toggleDailyQuest}
+                    variant="daily"
+                    darkMode={darkMode}
+                  />
+                ))}
+              </div>
+            )}
             <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-300'} flex justify-between items-center`}>
               <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Total Potential XP</span>
               <span className="text-xl font-bold text-cyan-400">
@@ -586,31 +724,54 @@ function Dashboard() {
               <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
                 Weekly Quests
               </h2>
-              <div className="xp-badge bg-purple-500/20 border-purple-500/50">
-                {weeklyQuests.filter(q => q.completed).length}/{weeklyQuests.length} Complete
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setEditMode(!editMode)}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+                    editMode
+                      ? 'bg-purple-500 text-white'
+                      : darkMode
+                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  }`}
+                >
+                  {editMode ? 'Done' : 'Edit Quests'}
+                </button>
+                <div className="xp-badge bg-purple-500/20 border-purple-500/50">
+                  {weeklyQuests.filter(q => q.completed).length}/{weeklyQuests.length} Complete
+                </div>
               </div>
             </div>
-            
+
             {/* Reset Timer */}
             <div className="mb-6">
-              <QuestResetTimer 
-                resetType="weekly" 
-                onReset={() => setWeeklyQuests(DEFAULT_WEEKLY_QUESTS)}
+              <QuestResetTimer
+                resetType="weekly"
+                onReset={resetWeeklyQuests}
                 darkMode={darkMode}
               />
             </div>
-            
-            <div className="space-y-3">
-              {weeklyQuests.map(quest => (
-                <QuestItem 
-                  key={quest.id}
-                  quest={quest}
-                  onToggle={toggleWeeklyQuest}
-                  variant="weekly"
-                  darkMode={darkMode}
-                />
-              ))}
-            </div>
+
+            {editMode ? (
+              <QuestEditor
+                quests={weeklyQuests}
+                setQuests={setWeeklyQuests}
+                questType="weekly"
+                darkMode={darkMode}
+              />
+            ) : (
+              <div className="space-y-3">
+                {weeklyQuests.map(quest => (
+                  <QuestItem
+                    key={quest.id}
+                    quest={quest}
+                    onToggle={toggleWeeklyQuest}
+                    variant="weekly"
+                    darkMode={darkMode}
+                  />
+                ))}
+              </div>
+            )}
             <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-300'} flex justify-between items-center`}>
               <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Total Potential XP</span>
               <span className="text-xl font-bold text-purple-400">
@@ -627,31 +788,54 @@ function Dashboard() {
               <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-yellow-500">
                 Monthly Quests
               </h2>
-              <div className="xp-badge bg-amber-500/20 border-amber-500/50 text-amber-300">
-                {monthlyQuests.filter(q => q.completed).length}/{monthlyQuests.length} Complete
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setEditMode(!editMode)}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+                    editMode
+                      ? 'bg-amber-500 text-white'
+                      : darkMode
+                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  }`}
+                >
+                  {editMode ? 'Done' : 'Edit Quests'}
+                </button>
+                <div className="xp-badge bg-amber-500/20 border-amber-500/50 text-amber-300">
+                  {monthlyQuests.filter(q => q.completed).length}/{monthlyQuests.length} Complete
+                </div>
               </div>
             </div>
-            
+
             {/* Reset Timer */}
             <div className="mb-6">
-              <QuestResetTimer 
-                resetType="monthly" 
-                onReset={() => setMonthlyQuests(DEFAULT_MONTHLY_QUESTS)}
+              <QuestResetTimer
+                resetType="monthly"
+                onReset={resetMonthlyQuests}
                 darkMode={darkMode}
               />
             </div>
-            
-            <div className="space-y-3">
-              {monthlyQuests.map(quest => (
-                <QuestItem 
-                  key={quest.id}
-                  quest={quest}
-                  onToggle={toggleMonthlyQuest}
-                  variant="monthly"
-                  darkMode={darkMode}
-                />
-              ))}
-            </div>
+
+            {editMode ? (
+              <QuestEditor
+                quests={monthlyQuests}
+                setQuests={setMonthlyQuests}
+                questType="monthly"
+                darkMode={darkMode}
+              />
+            ) : (
+              <div className="space-y-3">
+                {monthlyQuests.map(quest => (
+                  <QuestItem
+                    key={quest.id}
+                    quest={quest}
+                    onToggle={toggleMonthlyQuest}
+                    variant="monthly"
+                    darkMode={darkMode}
+                  />
+                ))}
+              </div>
+            )}
             <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-300'} flex justify-between items-center`}>
               <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Total Potential XP</span>
               <span className="text-xl font-bold text-amber-400">
@@ -735,6 +919,13 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen py-6 px-4 md:px-8 relative overflow-hidden font-body transition-colors duration-300">
+      {/* Data Sync Error */}
+      {dataError && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] bg-red-500/90 text-white px-6 py-3 rounded-lg shadow-lg backdrop-blur-sm border border-red-400/50 flex items-center gap-2 animate-fade">
+          <span>⚠️</span>
+          <span>{dataError}</span>
+        </div>
+      )}
       {/* Focus Mode Overlay */}
       <FocusModeOverlay
         isActive={penaltyMode.active}
@@ -762,6 +953,20 @@ function Dashboard() {
         onClose={() => setShowSettings(false)} 
         darkMode={darkMode}
         setDarkMode={setDarkMode}
+      />
+
+      {/* System Window */}
+      <SystemWindow
+        isOpen={showSystemWindow}
+        onClose={() => setShowSystemWindow(false)}
+        player={player}
+        dailyQuests={dailyQuests}
+        weeklyQuests={weeklyQuests}
+        monthlyQuests={monthlyQuests}
+        pillars={pillars}
+        bossBattles={bossBattles}
+        achievements={achievements}
+        darkMode={darkMode}
       />
       
       {/* XP Toast Notifications */}
@@ -798,6 +1003,11 @@ function Dashboard() {
               totalXP: Math.max(0, prev.totalXP - penaltyXP),
               xpMultiplier: Math.max(1.0, prev.xpMultiplier - 0.1)
             }));
+
+            // Activate penalty zone if 3+ quests missed
+            if (missedCount >= 3) {
+              activatePenaltyZone();
+            }
           }}
         />
       )}
@@ -845,9 +1055,10 @@ function Dashboard() {
       <div className="max-w-5xl mx-auto relative z-10">
         <Header 
           player={player}
-          loading={!isDataLoaded}
+          loading={!isDataLoaded && dataLoading} // Only show loading when data is actually fetching
           darkMode={darkMode} 
           onOpenSettings={() => setShowSettings(true)}
+          onOpenSystem={() => setShowSystemWindow(true)}
         />
         <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} darkMode={darkMode} />
         

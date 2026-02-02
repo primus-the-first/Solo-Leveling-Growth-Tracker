@@ -67,9 +67,32 @@ export const getCurrentLevelXP = (currentLevel) => {
   return 0;
 };
 
+// Calculate scaled boss HP based on player level
+export const calculateBossHP = (boss, playerLevel) => {
+  const baseHP = boss.baseHP || boss.hp || 100;
+  const scaling = boss.hpScaling || 10;
+  return baseHP + (playerLevel * scaling);
+};
+
+// Calculate pillar stats based on level and XP
+export const calculatePillarStats = (pillar) => {
+  const level = pillar.level || 1;
+  const xp = pillar.xp || 0;
+  const baseStats = DEFAULT_PILLARS[pillar.id]?.stats || [];
+
+  const levelBoost = (level - 1) * 1;
+  const xpBoost = Math.floor(xp / 10) * 0.1;
+  const totalBoost = Math.round(levelBoost + xpBoost);
+
+  return baseStats.map(stat => ({
+    ...stat,
+    value: Math.min(100, stat.value + totalBoost)
+  }));
+};
+
 // Initial player state
 export const DEFAULT_PLAYER = {
-  name: 'Primus',
+  name: 'Primus Aeternus',
   level: 1,
   totalXP: 0,
   title: 'Awakened Hunter',
@@ -200,6 +223,8 @@ export const DEFAULT_BOSS_BATTLES = [
     name: 'Shadow of Temptation',
     description: 'Defeat addiction through discipline',
     hp: 100,
+    baseHP: 100,
+    hpScaling: 10,
     xpReward: 500,
     titleReward: 'Willpower Master',
     levelRequired: 1, // Unlocked from start
@@ -211,6 +236,8 @@ export const DEFAULT_BOSS_BATTLES = [
     name: 'Debt Dragon',
     description: 'Slay the beast of financial burden',
     hp: 150,
+    baseHP: 150,
+    hpScaling: 15,
     xpReward: 1000,
     titleReward: 'Debt Slayer',
     levelRequired: 3,
@@ -222,6 +249,8 @@ export const DEFAULT_BOSS_BATTLES = [
     name: 'Fear of Failure',
     description: 'Overcome the paralysis of doubt',
     hp: 80,
+    baseHP: 80,
+    hpScaling: 8,
     xpReward: 300,
     titleReward: 'Fearless',
     levelRequired: 2,
@@ -233,6 +262,8 @@ export const DEFAULT_BOSS_BATTLES = [
     name: 'Time Thief',
     description: 'Vanquish the stealer of hours',
     hp: 120,
+    baseHP: 120,
+    hpScaling: 12,
     xpReward: 750,
     titleReward: 'Time Lord',
     levelRequired: 5,
@@ -406,7 +437,7 @@ export const loadFromFirestore = async (userId) => {
       }
 
       if (profileName) {
-        // console.log('Found Hunter Name:', profileName); // Logic verified. Keeping logs clean.
+        // Found hunter name
         if (!data) data = {};
         if (!data.player) {
           data.player = JSON.parse(JSON.stringify(DEFAULT_PLAYER));
@@ -414,7 +445,6 @@ export const loadFromFirestore = async (userId) => {
         data.player.name = profileName;
       }
     } catch (err) {
-      // Sanitize log: don't dump the full error object likely containing tokens/paths
       console.warn('Profile sync warning:', err.code || err.message || 'Unknown error');
     }
     

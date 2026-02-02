@@ -144,12 +144,14 @@ const OnboardingFlow = ({ onComplete }) => {
 
   // Cleanup timers and animations on unmount
   useEffect(() => {
+    const popup = popupRef.current;
+    
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      if (popupRef.current) {
-        gsap.killTweensOf(popupRef.current);
+      if (popup) {
+        gsap.killTweensOf(popup);
       }
     };
   }, []);

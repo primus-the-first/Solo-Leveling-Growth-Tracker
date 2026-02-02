@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Flame, Star, Brain, TrendingUp, BookOpen } from 'lucide-react';
 import gsap from 'gsap';
 import ProgressBar from './ProgressBar';
+import { calculatePillarStats } from '../gameState';
 
 const iconMap = {
   flame: Flame,
@@ -39,6 +40,9 @@ const PillarCard = ({ pillar, index, darkMode }) => {
   const cardRef = useRef(null);
   const IconComponent = iconMap[pillar.icon] || Flame;
   const currentXP = Number(pillar.xp ?? 0);
+
+  // Calculate dynamic stats based on pillar level and XP
+  const displayStats = calculatePillarStats(pillar);
 
   const handleHover = (isHovering) => {
     gsap.to(cardRef.current, {
@@ -90,7 +94,7 @@ const PillarCard = ({ pillar, index, darkMode }) => {
 
       {/* Individual Stats */}
       <div className="space-y-3">
-        {pillar.stats && pillar.stats.map((stat, i) => (
+        {displayStats && displayStats.map((stat, i) => (
           <div key={i}>
             <div className="flex justify-between mb-1">
               <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{stat.name}</span>

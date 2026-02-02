@@ -3,8 +3,9 @@ import PropTypes from 'prop-types';
 import { Sparkles, Zap, Settings } from 'lucide-react';
 import gsap from 'gsap';
 import { useAuth } from '../context/AuthContext';
+import SystemButton from './SystemButton';
 
-const Header = ({ player, loading, darkMode, onOpenSettings }) => {
+const Header = ({ player, darkMode, onOpenSettings, onOpenSystem }) => {
   const { user } = useAuth();
   const hunterName = player?.name || user?.displayName || 'Hunter';
   
@@ -33,22 +34,27 @@ const Header = ({ player, loading, darkMode, onOpenSettings }) => {
   return (
     <header ref={containerRef} className="text-center py-8 px-4 relative">
       {/* Settings Button */}
-      <button
-        onClick={onOpenSettings}
-        className={`
-          absolute top-4 right-4 z-50 p-3 rounded-xl 
-          ${darkMode 
-            ? 'bg-gray-800/80 border-gray-600 hover:bg-gray-700' 
-            : 'bg-white/80 border-gray-300 hover:bg-gray-100'
-          }
-          border shadow-lg backdrop-blur-sm
-          transition-all duration-300 hover:scale-110 
-          cursor-pointer
-        `}
-        aria-label="Open settings"
-      >
-        <Settings className={`w-6 h-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
-      </button>
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+        {/* System Button */}
+        <SystemButton onClick={onOpenSystem} darkMode={darkMode} />
+        
+        <button
+          onClick={onOpenSettings}
+          className={`
+            p-3 rounded-xl 
+            ${darkMode 
+              ? 'bg-gray-800/80 border-gray-600 hover:bg-gray-700' 
+              : 'bg-white/80 border-gray-300 hover:bg-gray-100'
+            }
+            border shadow-lg backdrop-blur-sm
+            transition-all duration-300 hover:scale-110 
+            cursor-pointer
+          `}
+          aria-label="Open settings"
+        >
+          <Settings className={`w-6 h-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+        </button>
+      </div>
 
       {/* Background Glow Effect */}
       <div className="absolute inset-0 bg-gradient-radial from-cyan-500/10 via-transparent to-transparent pointer-events-none" />
@@ -59,11 +65,7 @@ const Header = ({ player, loading, darkMode, onOpenSettings }) => {
         className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-wider mb-3 gradient-text animate-enter uppercase"
         style={{ fontFamily: 'Cinzel, serif' }}
       >
-        {loading ? (
-          <span className="animate-pulse opacity-70">Loading...</span>
-        ) : (
-          hunterName
-        )}
+        {hunterName}
       </h1>
       
       {/* Subtitle */}
@@ -101,7 +103,7 @@ export default Header;
 
 Header.propTypes = {
   player: PropTypes.object,
-  loading: PropTypes.bool,
   darkMode: PropTypes.bool.isRequired,
   onOpenSettings: PropTypes.func.isRequired,
+  onOpenSystem: PropTypes.func,
 };

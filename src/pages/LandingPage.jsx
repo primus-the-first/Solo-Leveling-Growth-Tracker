@@ -14,7 +14,7 @@ const LandingPage = () => {
   const titleRef = useRef(null);
   const subtitleRef = useRef(null);
   const ctaRef = useRef(null);
-  const featuresRef = useRef(null);
+  const landingContentRef = useRef(null);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -26,6 +26,9 @@ const LandingPage = () => {
   // Entrance animations
   useEffect(() => {
     const ctx = gsap.context(() => {
+      // Safety check if elements exist
+      if (!titleRef.current) return;
+
       const tl = gsap.timeline();
       
       // Title slide up
@@ -76,33 +79,45 @@ const LandingPage = () => {
           : '/onboarding';
         
         // Animate out before navigation
-        gsap.to('.landing-content', {
-          opacity: 0,
-          y: -30,
-          duration: 0.4,
-          ease: 'power2.in',
-          onComplete: () => navigate(destination)
-        });
+        if (landingContentRef.current) {
+          gsap.to(landingContentRef.current, {
+            opacity: 0,
+            y: -30,
+            duration: 0.4,
+            ease: 'power2.in',
+            onComplete: () => navigate(destination)
+          });
+        } else {
+          navigate(destination);
+        }
       } catch (error) {
         console.error('Error checking onboarding:', error);
         // Default to onboarding on error
-        gsap.to('.landing-content', {
+        if (landingContentRef.current) {
+          gsap.to(landingContentRef.current, {
+            opacity: 0,
+            y: -30,
+            duration: 0.4,
+            ease: 'power2.in',
+            onComplete: () => navigate('/onboarding')
+          });
+        } else {
+          navigate('/onboarding');
+        }
+      }
+    } else {
+      // Fallback - go to onboarding
+      if (landingContentRef.current) {
+        gsap.to(landingContentRef.current, {
           opacity: 0,
           y: -30,
           duration: 0.4,
           ease: 'power2.in',
           onComplete: () => navigate('/onboarding')
         });
+      } else {
+        navigate('/onboarding');
       }
-    } else {
-      // Fallback - go to onboarding
-      gsap.to('.landing-content', {
-        opacity: 0,
-        y: -30,
-        duration: 0.4,
-        ease: 'power2.in',
-        onComplete: () => navigate('/onboarding')
-      });
     }
   };
 
@@ -148,7 +163,7 @@ const LandingPage = () => {
       </div>
       
       {/* Content */}
-      <div className="relative z-10 landing-content">
+      <div ref={landingContentRef} className="relative z-10 landing-content">
         {/* Navigation */}
         <nav className="flex justify-between items-center px-6 md:px-12 py-6">
           <div className="flex items-center gap-2">
@@ -210,7 +225,6 @@ const LandingPage = () => {
 
           {/* Features Section */}
           <div 
-            ref={featuresRef}
             className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 md:mt-24 pb-16"
           >
             {features.map((feature, index) => (

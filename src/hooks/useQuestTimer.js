@@ -16,7 +16,7 @@ export const getTimeUntilReset = (resetType) => {
     case 'weekly': {
       // Next Monday midnight
       resetTime = new Date(now);
-      const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
+      const daysUntilMonday = now.getDay() === 1 ? 7 : (8 - now.getDay()) % 7;
       resetTime.setDate(resetTime.getDate() + daysUntilMonday);
       resetTime.setHours(0, 0, 0, 0);
       break;

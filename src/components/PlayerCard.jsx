@@ -1,11 +1,10 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { Zap, Flame, Trophy, TrendingUp, Shield } from 'lucide-react';
 import gsap from 'gsap';
 import ProgressBar from './ProgressBar';
 import { getCurrentLevelXP, getNextLevelXP } from '../gameState';
 import { useAuth } from '../context/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+
 
 // Generate a license number from player data
 const generateLicenseNo = (name) => {

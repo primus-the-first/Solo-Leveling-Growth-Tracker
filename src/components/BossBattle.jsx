@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Skull, Swords, Heart, Shield, Zap, Trophy, X } from 'lucide-react';
 import gsap from 'gsap';
+import { calculateBossHP } from '../gameState';
 
 // Pre-generated defeat particles
 const DEFEAT_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
@@ -16,19 +17,19 @@ const DEFEAT_PARTICLES = Array.from({ length: 30 }, (_, i) => ({
 const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
   const validPlayerLevel = Math.max(1, Number(playerLevel) || 1);
   const [phase, setPhase] = useState('intro'); // 'intro' | 'battle' | 'victory'
-  const [bossHP, setBossHP] = useState(boss?.hp || 100);
+  const [bossHP, setBossHP] = useState(() => calculateBossHP(boss, validPlayerLevel));
   const [playerHP, setPlayerHP] = useState(100);
   const [isAttacking, setIsAttacking] = useState(false);
   const [damageText, setDamageText] = useState(null);
-  
+
   const overlayRef = useRef(null);
   const bossRef = useRef(null);
   const playerRef = useRef(null);
   const victoryRef = useRef(null);
   const particlesRef = useRef([]);
   const counterAttackTimerRef = useRef(null);
-  
-  const maxBossHP = boss?.hp || 100;
+
+  const maxBossHP = calculateBossHP(boss, validPlayerLevel);
   
   // Intro animation
   useEffect(() => {
