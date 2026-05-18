@@ -394,68 +394,32 @@ export const saveToFirestore = async (userId, gameData = null) => {
 // Load game data from Firestore
 export const loadFromFirestore = async (userId) => {
   if (!userId) return null;
-  
+
   try {
-    const docRef = doc(db, 'users', userId, 'gameData', 'current');
-    const docSnap = await getDoc(docRef);
-    
-    let data = docSnap.exists() ? docSnap.data() : null;
-    
-    // Check if the current game data document itself has a top-level hunterName
-    // (This covers the case where the user might have saved the name directly to gameData/current)
-    if (data && data.hunterName) {
-       if (!data.player) data.player = JSON.parse(JSON.stringify(DEFAULT_PLAYER));
-       data.player.name = data.hunterName;
+    const [gameSnap, onboardingSnap, userDocSnap] = await Promise.all([
+      getDoc(doc(db, 'users', userId, 'gameData', 'current')),
+      getDoc(doc(db, 'users', userId, 'gameData', 'onboarding')),
+      getDoc(doc(db, 'users', userId)),
+    ]);
+
+    let data = gameSnap.exists() ? gameSnap.data() : null;
+    if (data?.lastSaved) delete data.lastSaved;
+
+    // Resolve hunter name: onboarding doc > root user doc > gameData.hunterName
+    let profileName =
+      onboardingSnap.exists() ? onboardingSnap.data()?.hunterName ?? null : null;
+    if (!profileName && userDocSnap.exists())
+      profileName = userDocSnap.data()?.hunterName ?? null;
+    if (!profileName && data?.hunterName)
+      profileName = data.hunterName;
+
+    if (profileName) {
+      if (!data) data = {};
+      if (!data.player) data.player = JSON.parse(JSON.stringify(DEFAULT_PLAYER));
+      data.player.name = profileName;
     }
 
-    // Check for hunterName in the root user document (set during onboarding)
-    // This ensures we get the correct name even if gameData/current hasn't been created yet
-    // Check for hunterName in gameData/onboarding first (custom collection)
-    // Then check root user document as fallback
-    try {
-      let profileName = null;
-      
-      // Check onboarding doc
-      const onboardingRef = doc(db, 'users', userId, 'gameData', 'onboarding');
-      const onboardingSnap = await getDoc(onboardingRef);
-      
-      if (onboardingSnap.exists()) {
-        const onboardingData = onboardingSnap.data();
-        if (onboardingData?.hunterName) {
-          profileName = onboardingData.hunterName;
-        }
-      } 
-      
-      if (!profileName) {
-        // Fallback to root doc
-        const userDocRef = doc(db, 'users', userId);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          if (userData?.hunterName) {
-            profileName = userData.hunterName;
-          }
-        }
-      }
-
-      if (profileName) {
-        // Found hunter name
-        if (!data) data = {};
-        if (!data.player) {
-          data.player = JSON.parse(JSON.stringify(DEFAULT_PLAYER));
-        }
-        data.player.name = profileName;
-      }
-    } catch (err) {
-      console.warn('Profile sync warning:', err.code || err.message || 'Unknown error');
-    }
-    
-    if (data) {
-      // Remove Firestore metadata
-      if (data.lastSaved) delete data.lastSaved;
-      return data;
-    }
-    return null;
+    return data;
   } catch (e) {
     console.error('Failed to load from Firestore:', e.code || e.message);
     return null;

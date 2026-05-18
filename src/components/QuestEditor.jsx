@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { SLPlus, SLEdit, SLTrash, SLSave, SLClose } from './icons/SLIcons';
 
 const PILLARS = [
   { id: 'personal', label: 'Personal', color: 'orange' },
@@ -137,10 +137,10 @@ const QuestEditor = ({ quests, setQuests, questType = 'daily', darkMode = true }
               </div>
               <div className="flex justify-end gap-2">
                 <button onClick={handleCancel} className={buttonClasses.cancel}>
-                  <X className="w-5 h-5" />
+                  <SLClose size={20} />
                 </button>
                 <button onClick={handleSave} className={buttonClasses.save}>
-                  <Save className="w-5 h-5" />
+                  <SLSave size={20} />
                 </button>
               </div>
             </div>
@@ -162,10 +162,10 @@ const QuestEditor = ({ quests, setQuests, questType = 'daily', darkMode = true }
               </div>
               <div className="flex gap-1">
                 <button onClick={() => handleEdit(quest)} className={buttonClasses.edit} title="Edit quest">
-                  <Edit2 className="w-4 h-4" />
+                  <SLEdit size={16} />
                 </button>
                 <button onClick={() => handleDelete(quest.id)} className={buttonClasses.delete} title="Delete quest">
-                  <Trash2 className="w-4 h-4" />
+                  <SLTrash size={16} />
                 </button>
               </div>
             </div>
@@ -221,14 +221,14 @@ const QuestEditor = ({ quests, setQuests, questType = 'daily', darkMode = true }
             </div>
             <div className="flex justify-end gap-2">
               <button onClick={handleCancel} className={buttonClasses.cancel}>
-                <X className="w-5 h-5" />
+                <SLClose size={20} />
               </button>
               <button
                 onClick={handleAdd}
                 className={buttonClasses.save}
                 disabled={!editForm.task?.trim()}
               >
-                <Save className="w-5 h-5" />
+                <SLSave size={20} />
               </button>
             </div>
           </div>
@@ -242,7 +242,7 @@ const QuestEditor = ({ quests, setQuests, questType = 'daily', darkMode = true }
               : 'border-gray-300 text-gray-500 hover:border-cyan-500 hover:text-cyan-600 hover:bg-cyan-50'
           }`}
         >
-          <Plus className="w-5 h-5 inline mr-2" />
+          <SLPlus size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
           Add Custom {questType.charAt(0).toUpperCase() + questType.slice(1)} Quest
         </button>
       )}

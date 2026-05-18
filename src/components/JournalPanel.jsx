@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Book, Plus, Trash2, Save, Edit3, FileText, X } from 'lucide-react';
+import { SLBook, SLPlus, SLTrash, SLSave, SLEdit, SLClose } from './icons/SLIcons';
 
 const JournalEditor = ({ entry, onSave, onCancel, darkMode }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -44,14 +44,14 @@ const JournalEditor = ({ entry, onSave, onCancel, darkMode }) => {
                 onClick={handleCancelWrapper}
                 className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
               >
-                <X className="w-4 h-4" />
+                <SLClose size={16} />
                 Cancel
               </button>
               <button
                 onClick={handleSaveWrapper}
                 className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500 text-white rounded-lg hover:bg-cyan-400 transition-colors text-sm"
               >
-                <Save className="w-4 h-4" />
+                <SLSave size={16} />
                 Save
               </button>
             </>
@@ -59,12 +59,12 @@ const JournalEditor = ({ entry, onSave, onCancel, darkMode }) => {
             <button
               onClick={() => setIsEditing(true)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                darkMode 
-                  ? 'bg-gray-800 text-cyan-400 hover:bg-gray-700' 
+                darkMode
+                  ? 'bg-gray-800 text-cyan-400 hover:bg-gray-700'
                   : 'bg-gray-100 text-cyan-600 hover:bg-gray-200'
               }`}
             >
-              <Edit3 className="w-4 h-4" />
+              <SLEdit size={16} />
               Edit
             </button>
           )}
@@ -159,7 +159,7 @@ const JournalPanel = ({ journal, setJournal, darkMode = true }) => {
       <div className={`w-full md:w-1/3 border-r ${darkMode ? 'border-gray-700/50' : 'border-gray-200'} flex flex-col max-h-[200px] md:max-h-full`}>
         <div className={`p-4 border-b ${darkMode ? 'border-gray-700/50' : 'border-gray-200'} flex justify-between items-center`}>
           <div className="flex items-center gap-2">
-            <Book className={`w-5 h-5 ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
+            <SLBook size={20} style={{ color: darkMode ? '#22D3EE' : '#0891B2' }} />
             <h3 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Journal</h3>
           </div>
           <button
@@ -167,7 +167,7 @@ const JournalPanel = ({ journal, setJournal, darkMode = true }) => {
             className="p-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors"
             title="New Entry"
           >
-            <Plus className="w-5 h-5" />
+            <SLPlus size={20} />
           </button>
         </div>
         
@@ -208,7 +208,7 @@ const JournalPanel = ({ journal, setJournal, darkMode = true }) => {
                       selectedEntryId === entry.id ? 'opacity-100' : ''
                     }`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <SLTrash size={16} />
                   </button>
                 </div>
                 <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
@@ -231,7 +231,7 @@ const JournalPanel = ({ journal, setJournal, darkMode = true }) => {
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-            <FileText className="w-16 h-16 mb-4 opacity-20" />
+            <SLBook size={64} style={{ marginBottom: '1rem', opacity: 0.2 }} />
             <p className="text-lg">Select an entry or create a new one</p>
           </div>
         )}

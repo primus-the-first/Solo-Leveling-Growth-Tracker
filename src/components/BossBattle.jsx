@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Skull, Swords, Heart, Shield, Zap, Trophy, X } from 'lucide-react';
+import { SLSkull, SLSwords, SLHeart, SLShield, SLZap, SLTrophy, SLClose } from './icons/SLIcons';
 import gsap from 'gsap';
 import { calculateBossHP } from '../gameState';
 
@@ -228,7 +228,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
         onClick={onClose}
         className="absolute top-4 right-4 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700 transition-colors z-10"
       >
-        <X className="w-6 h-6 text-gray-400" />
+        <SLClose size={22} style={{ color: 'var(--sl-muted)' }} />
       </button>
       
       {/* Battle Arena */}
@@ -261,7 +261,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
               ref={bossRef}
               className="w-32 h-32 rounded-full bg-gradient-to-br from-red-900 to-gray-900 border-4 border-red-500 flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.5)]"
             >
-              <Skull className="w-16 h-16 text-red-400" />
+              <SLSkull size={64} style={{ color: '#EF4444' }} />
             </div>
             
             {/* Defeat particles container */}
@@ -301,7 +301,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
             className="absolute inset-0 flex flex-col items-center justify-center z-20"
           >
             <div className="text-center p-8 rounded-2xl bg-gray-900/90 border-2 border-amber-500/50 shadow-[0_0_60px_rgba(251,191,36,0.3)]">
-              <Trophy className="w-20 h-20 text-amber-400 mx-auto mb-4" />
+              <SLTrophy size={80} style={{ color: '#F59E0B', display: 'block', margin: '0 auto 1rem' }} />
               <h1 className="text-4xl font-bold text-amber-400 mb-2 font-display">
                 VICTORY!
               </h1>
@@ -310,12 +310,12 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
               </p>
               <div className="flex gap-4 justify-center mb-6">
                 <div className="px-4 py-2 bg-green-500/20 rounded-lg border border-green-500/30">
-                  <Zap className="w-5 h-5 text-green-400 inline mr-2" />
+                  <SLZap size={18} style={{ color: '#22C55E', display: 'inline', verticalAlign: 'middle', marginRight: '0.4rem' }} />
                   <span className="text-green-300 font-semibold">+{boss.xpReward} XP</span>
                 </div>
                 {boss.titleReward && (
                   <div className="px-4 py-2 bg-purple-500/20 rounded-lg border border-purple-500/30">
-                    <Trophy className="w-5 h-5 text-purple-400 inline mr-2" />
+                    <SLTrophy size={18} style={{ color: '#A855F7', display: 'inline', verticalAlign: 'middle', marginRight: '0.4rem' }} />
                     <span className="text-purple-300 font-semibold">{boss.titleReward}</span>
                   </div>
                 )}
@@ -336,7 +336,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
             className="absolute inset-0 flex flex-col items-center justify-center z-20 animate-enter"
           >
             <div className="text-center p-8 rounded-2xl bg-gray-900/90 border-2 border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.3)]">
-              <Skull className="w-20 h-20 text-red-500 mx-auto mb-4" />
+              <SLSkull size={80} style={{ color: '#EF4444', display: 'block', margin: '0 auto 1rem' }} />
               <h1 className="text-4xl font-bold text-red-500 mb-2 font-display">
                 DEFEAT
               </h1>
@@ -356,7 +356,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
         {/* Divider */}
         <div className="flex items-center justify-center my-6">
           <div className="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent flex-1" />
-          <Swords className="w-8 h-8 text-gray-500 mx-4" />
+          <SLSwords size={28} style={{ color: 'var(--sl-muted)', margin: '0 1rem' }} />
           <div className="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent flex-1" />
         </div>
         
@@ -381,7 +381,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
             ref={playerRef}
             className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-cyan-900 to-gray-900 border-4 border-cyan-500 flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.4)] mb-6"
           >
-            <Shield className="w-10 h-10 text-cyan-400" />
+            <SLShield size={40} style={{ color: 'var(--sl-blue)' }} />
           </div>
           
           {/* Attack Button */}
@@ -397,7 +397,7 @@ const BossBattle = ({ boss, onDefeat, onClose, playerLevel, onAttack }) => {
                 }
               `}
             >
-              <Swords className="w-6 h-6 inline mr-2" />
+              <SLSwords size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '0.5rem' }} />
               {isAttacking ? 'Attacking...' : 'ATTACK!'}
             </button>
           )}

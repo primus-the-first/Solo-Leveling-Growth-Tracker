@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Gift, Plus, Check, Trash2, Trophy } from 'lucide-react';
+import { SLGift, SLPlus, SLCheck, SLTrash, SLTrophy } from './icons/SLIcons';
 
 const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
   const [isAdding, setIsAdding] = useState(false);
@@ -49,7 +49,7 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-lg ${darkMode ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
-            <Gift className={`w-6 h-6 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+            <SLGift size={22} style={{ color: darkMode ? '#F59E0B' : '#D97706' }} />
           </div>
           <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Real-Life Rewards
@@ -64,7 +64,7 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
               : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
           }`}
         >
-          <Plus className="w-4 h-4" />
+          <SLPlus size={14} />
           Add Reward
         </button>
       </div>
@@ -122,7 +122,7 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
       <div className="space-y-3">
         {sortedRewards.length === 0 ? (
           <div className={`text-center py-8 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-            <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <SLTrophy size={48} style={{ display: 'block', margin: '0 auto 0.75rem', opacity: 0.4 }} />
             <p>No rewards set yet.</p>
             <p className="text-sm">Add rewards to motivate yourself!</p>
           </div>
@@ -151,11 +151,11 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     {reward.claimed ? (
-                      <Check className="w-5 h-5 text-green-400" />
+                      <SLCheck size={18} style={{ color: '#22C55E' }} />
                     ) : unlocked ? (
-                      <Gift className="w-5 h-5 text-amber-400" />
+                      <SLGift size={18} style={{ color: '#F59E0B' }} />
                     ) : (
-                      <Gift className={`w-5 h-5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <SLGift size={18} style={{ color: darkMode ? '#4A5568' : '#9CA3AF' }} />
                     )}
                     <span className={`font-medium ${
                       reward.claimed 
@@ -188,7 +188,7 @@ const RewardsTracker = ({ player, rewards, setRewards, darkMode = true }) => {
                       onClick={() => deleteReward(reward.id)}
                       className={`p-1 rounded ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-colors`}
                     >
-                      <Trash2 className={`w-4 h-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <SLTrash size={14} style={{ color: darkMode ? '#4A5568' : '#9CA3AF' }} />
                     </button>
                   </div>
                 </div>

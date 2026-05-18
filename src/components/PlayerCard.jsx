@@ -1,237 +1,235 @@
 import { useRef, useEffect } from 'react';
-import { Zap, Flame, Trophy, TrendingUp, Shield } from 'lucide-react';
 import gsap from 'gsap';
-import ProgressBar from './ProgressBar';
 import { getCurrentLevelXP, getNextLevelXP } from '../gameState';
 import { useAuth } from '../context/AuthContext';
 
-
-// Generate a license number from player data
-const generateLicenseNo = (name) => {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = ((hash << 5) - hash) + name.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash).toString().padStart(12, '0').slice(0, 12);
+const RANK_DATA = {
+  E: { color: '#4E9AFE', label: 'E-RANK' },
+  D: { color: '#22C55E', label: 'D-RANK' },
+  C: { color: '#3B82F6', label: 'C-RANK' },
+  B: { color: '#A855F7', label: 'B-RANK' },
+  A: { color: '#EF4444', label: 'A-RANK' },
+  S: { color: '#F59E0B', label: 'S-RANK' },
 };
 
-// Get rank based on level
-const getRank = (level) => {
-  if (level >= 50) return { letter: 'S', color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500' };
-  if (level >= 40) return { letter: 'A', color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500' };
-  if (level >= 30) return { letter: 'B', color: 'text-purple-400', bg: 'bg-purple-500/20', border: 'border-purple-500' };
-  if (level >= 20) return { letter: 'C', color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500' };
-  if (level >= 10) return { letter: 'D', color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500' };
-  return { letter: 'E', color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500' };
+const getPlayerRank = (level) => {
+  if (level >= 25) return 'S';
+  if (level >= 20) return 'A';
+  if (level >= 15) return 'B';
+  if (level >= 10) return 'C';
+  if (level >= 5)  return 'D';
+  return 'E';
 };
+
+const StatRow = ({ label, value, color }) => (
+  <div className="flex items-center justify-between py-1.5" style={{ borderBottom: '1px solid rgba(78,154,254,0.07)' }}>
+    <span className="sys-label">{label}</span>
+    <span
+      style={{
+        fontFamily: 'Share Tech Mono, monospace',
+        fontSize: '0.82rem',
+        color: color || 'var(--sl-white)',
+      }}
+    >
+      {value}
+    </span>
+  </div>
+);
 
 const PlayerCard = ({ player, darkMode }) => {
   const { user } = useAuth();
-  const hunterName = player?.name || user?.displayName || 'Hunter';
+  const hunterName = (player?.name || user?.displayName || 'Hunter').toUpperCase();
   const cardRef = useRef(null);
-  const xpBarRef = useRef(null);
-  
-  // Calculate XP progress for current level
+
+  const rank     = getPlayerRank(player?.level ?? 1);
+  const rankData = RANK_DATA[rank];
+
   const currentLevelXP = getCurrentLevelXP(player.level);
-  const nextLevelXP = getNextLevelXP(player.level);
-  const xpNeededForLevel = nextLevelXP - currentLevelXP;
-  const xpInCurrentLevel = Math.max(0, Math.min(player.totalXP - currentLevelXP, xpNeededForLevel));
-  const xpProgress = xpNeededForLevel <= 0 ? 100 : Math.min((xpInCurrentLevel / xpNeededForLevel) * 100, 100);
-  
-  const licenseNo = generateLicenseNo(hunterName);
-  const rank = getRank(player.level);
-  
-  // Entrance animation
+  const nextLevelXP    = getNextLevelXP(player.level);
+  const xpNeeded       = nextLevelXP - currentLevelXP;
+  const xpIn           = Math.max(0, Math.min(player.totalXP - currentLevelXP, xpNeeded));
+  const xpPct          = xpNeeded <= 0 ? 100 : Math.min((xpIn / xpNeeded) * 100, 100);
+
   useEffect(() => {
     if (cardRef.current) {
       gsap.fromTo(cardRef.current,
-        { opacity: 0, y: -20, scale: 0.95 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power3.out' }
+        { opacity: 0, y: -16, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: 'power3.out' }
       );
     }
   }, []);
 
+  const dark = darkMode !== false;
+
   return (
     <div
       ref={cardRef}
-      className={`relative mb-8 rounded-2xl overflow-hidden ${
-        player.penalties?.active ? 'ring-2 ring-red-500/50' : ''
-      }`}
+      className="relative mb-6 overflow-hidden"
       style={{
-        background: darkMode 
-          ? 'linear-gradient(135deg, #1a2a4a 0%, #0f172a 50%, #1e3a5f 100%)'
-          : 'linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #e0f2fe 100%)',
-        boxShadow: darkMode 
-          ? '0 0 30px rgba(34, 211, 238, 0.15), inset 0 1px 0 rgba(255,255,255,0.1)'
-          : '0 4px 20px rgba(0,0,0,0.1)',
+        background: dark ? 'var(--sl-panel)' : 'rgba(240,244,255,0.95)',
+        border: `1px solid ${rankData.color}30`,
+        borderTop: `2px solid ${rankData.color}`,
+        borderRadius: '4px',
+        boxShadow: dark
+          ? `0 0 30px ${rankData.color}15, 0 4px 20px rgba(0,0,0,0.4)`
+          : '0 2px 16px rgba(10,22,40,0.12)',
       }}
     >
-      {/* Header Bar */}
-      <div 
-        className="px-6 py-3 flex justify-between items-center"
+      {/* Window Title Bar */}
+      <div
+        className="flex items-center justify-between px-4 py-2"
         style={{
-          background: darkMode 
-            ? 'linear-gradient(90deg, #164e63 0%, #0e7490 50%, #155e75 100%)'
-            : 'linear-gradient(90deg, #0891b2 0%, #06b6d4 50%, #0891b2 100%)',
+          background: dark
+            ? `linear-gradient(90deg, ${rankData.color}18 0%, rgba(10,22,40,0.6) 100%)`
+            : `linear-gradient(90deg, ${rankData.color}15 0%, rgba(240,244,255,0.8) 100%)`,
+          borderBottom: `1px solid ${rankData.color}25`,
         }}
       >
-        <h3 className="text-white font-bold tracking-wider text-lg">Hunter's License</h3>
-        <span className="text-cyan-200 text-sm font-medium">Hunter's Association</span>
-      </div>
-      
-      {/* Main Content */}
-      <div className="p-6 flex gap-6">
-        {/* Left Side - Photo & Stats */}
-        <div className="flex flex-col items-center gap-3">
-          {/* Photo Frame */}
-          <div 
-            className="w-24 h-28 rounded-lg border-2 border-cyan-500/50 overflow-hidden flex items-center justify-center"
+        <div className="flex items-center gap-2">
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{ background: rankData.color, boxShadow: `0 0 6px ${rankData.color}` }}
+          />
+          <span
             style={{
-              background: darkMode 
-                ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)'
-                : 'linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)',
+              fontFamily: 'Orbitron, sans-serif',
+              fontSize: '0.65rem',
+              letterSpacing: '0.2em',
+              color: rankData.color,
             }}
           >
-            <div className="w-20 h-24 rounded bg-gradient-to-br from-cyan-600 to-purple-600 flex items-center justify-center text-4xl font-bold text-white shadow-inner">
-              {hunterName.charAt(0).toUpperCase()}
-            </div>
-          </div>
-          
-          {/* Level Badge */}
-          <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30">
-            <Shield className="w-4 h-4 text-cyan-400" />
-            <span className={`text-sm font-bold ${darkMode ? 'text-cyan-300' : 'text-cyan-600'}`}>
-              Lv.{player.level}
-            </span>
-          </div>
+            SYSTEM — STATUS WINDOW
+          </span>
         </div>
-        
-        {/* Middle - Info Fields */}
-        <div className="flex-1 space-y-3">
-          {/* License Number Row */}
-          <div className="flex justify-between items-start">
-            <div>
-              <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>License No:</span>
-              <p className={`font-mono font-bold ${darkMode ? 'text-cyan-300' : 'text-cyan-700'}`}>
-                {licenseNo}
-              </p>
-            </div>
-            <div className="text-right">
-              <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Rank:</span>
-              <div className={`w-10 h-10 rounded-lg ${rank.bg} border-2 ${rank.border} flex items-center justify-center`}>
-                <span className={`text-2xl font-black ${rank.color}`}>{rank.letter}</span>
-              </div>
-            </div>
+        <span className="sys-label">{player.penalties?.active ? '⚠ PENALTY ACTIVE' : 'ONLINE'}</span>
+      </div>
+
+      {/* Body */}
+      <div className="p-5">
+        {/* Top row: Avatar + Name block */}
+        <div className="flex items-start gap-4 mb-4">
+          {/* Avatar */}
+          <div
+            className="flex-shrink-0 w-16 h-16 flex items-center justify-center text-2xl font-black"
+            style={{
+              background: dark
+                ? `linear-gradient(135deg, ${rankData.color}20, rgba(10,22,40,0.8))`
+                : `linear-gradient(135deg, ${rankData.color}15, rgba(240,244,255,0.9))`,
+              border: `1px solid ${rankData.color}40`,
+              borderRadius: '3px',
+              fontFamily: 'Orbitron, sans-serif',
+              color: rankData.color,
+              boxShadow: `0 0 16px ${rankData.color}20`,
+            }}
+          >
+            {hunterName.charAt(0)}
           </div>
-          
-          {/* Name */}
-          <div>
-            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Name:</span>
-            <p className={`text-xl font-bold font-display ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+
+          {/* Name + rank + title */}
+          <div className="flex-1 min-w-0">
+            <h2
+              className="font-black leading-none mb-1 truncate"
+              style={{
+                fontFamily: 'Orbitron, sans-serif',
+                fontSize: '1.1rem',
+                color: dark ? 'var(--sl-white)' : '#0A1628',
+                letterSpacing: '0.05em',
+              }}
+            >
               {hunterName}
-            </p>
-          </div>
-          
-          {/* Category / Title */}
-          <div>
-            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Category:</span>
-            <p className={`font-semibold ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
-              {player.title}
-            </p>
-          </div>
-          
-          {/* XP Progress */}
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span className={darkMode ? 'text-gray-500' : 'text-gray-500'}>XP Progress</span>
-              <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>
-                {xpNeededForLevel > 0 
-                  ? `${xpInCurrentLevel.toLocaleString()} / ${xpNeededForLevel.toLocaleString()}`
-                  : 'Max Level'
-                }
+            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className="px-2 py-0.5 text-xs font-bold tracking-widest"
+                style={{
+                  fontFamily: 'Orbitron, sans-serif',
+                  fontSize: '0.6rem',
+                  color: rankData.color,
+                  border: `1px solid ${rankData.color}`,
+                  borderRadius: '2px',
+                  background: `${rankData.color}12`,
+                }}
+              >
+                {rankData.label}
               </span>
-            </div>
-            <div ref={xpBarRef}>
-              <ProgressBar
-                value={xpProgress}
-                maxValue={100}
-                gradient="cyan-purple"
-                showLabel={false}
-                height="h-2"
-                animated={true}
-                darkMode={darkMode}
-              />
+              <span className="sys-label truncate">{player.title}</span>
             </div>
           </div>
-        </div>
-        
-        {/* Right Side - Chip & Stats */}
-        <div className="flex flex-col justify-between items-end">
-          {/* XP Multiplier */}
-          {player.xpMultiplier > 1 && (
-            <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full font-semibold">
-              {player.xpMultiplier}x XP
-            </span>
-          )}
-          
-          {/* Hologram Chip */}
-          <div 
-            className="w-14 h-10 rounded-lg flex items-center justify-center mt-auto"
+
+          {/* Level */}
+          <div
+            className="flex-shrink-0 text-center px-3 py-2"
             style={{
-              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 25%, #d97706 50%, #fbbf24 75%, #f59e0b 100%)',
-              backgroundSize: '200% 200%',
-              animation: 'shimmer 3s ease infinite',
+              border: `1px solid ${rankData.color}40`,
+              borderRadius: '3px',
+              background: `${rankData.color}08`,
             }}
           >
-            <div className="w-12 h-8 rounded border border-amber-600/50 grid grid-cols-3 gap-0.5 p-1">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-amber-700/50 rounded-sm" />
-              ))}
-            </div>
-          </div>
-          
-          {/* Stats */}
-          <div className="text-right mt-2 space-y-1">
-            <div className="flex items-center gap-1 justify-end">
-              <Trophy className="w-3 h-3 text-amber-400" />
-              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {player.totalXP.toLocaleString()} XP
-              </span>
-            </div>
-            <div className="flex items-center gap-1 justify-end">
-              <Flame className={`w-3 h-3 ${(player.streaks?.daily ?? 0) > 0 ? 'text-orange-400' : 'text-gray-500'}`} />
-              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {player.streaks?.daily ?? 0}d Streak
-              </span>
+            <div className="sys-label">LEVEL</div>
+            <div
+              className="font-black"
+              style={{
+                fontFamily: 'Orbitron, sans-serif',
+                fontSize: '1.4rem',
+                color: rankData.color,
+                lineHeight: 1,
+              }}
+            >
+              {player.level}
             </div>
           </div>
         </div>
+
+        {/* XP Bar */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="sys-label">EXPERIENCE POINTS</span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '0.72rem', color: 'var(--sl-blue)' }}>
+              {xpIn.toLocaleString()} / {xpNeeded > 0 ? xpNeeded.toLocaleString() : '---'}
+            </span>
+          </div>
+          <div
+            style={{
+              height: '8px',
+              background: 'rgba(10,22,40,0.8)',
+              borderRadius: '2px',
+              border: '1px solid rgba(78,154,254,0.12)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${xpPct}%`,
+                background: `linear-gradient(90deg, ${rankData.color}, #76FFFA)`,
+                borderRadius: '1px',
+                boxShadow: `0 0 8px ${rankData.color}80`,
+                transition: 'width 0.8s ease-out',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 gap-x-6">
+          <div>
+            <StatRow label="TOTAL XP"   value={player.totalXP.toLocaleString()} color="var(--sl-blue)" />
+            <StatRow label="STREAK"     value={`${player.streaks?.daily ?? 0}D`} color="#F97316" />
+            <StatRow label="MULTIPLIER" value={`${player.xpMultiplier ?? 1}×`}   color="var(--sl-aqua)" />
+          </div>
+          <div>
+            <StatRow label="SKILL PTS"  value={typeof player.skillPoints === 'object' ? Object.values(player.skillPoints ?? {}).reduce((a, b) => a + b, 0) : (player.skillPoints ?? 0)} color="var(--sl-gold)" />
+            <StatRow label="STATUS"     value={player.penalties?.active ? 'PENALTY' : 'ACTIVE'} color={player.penalties?.active ? '#EF4444' : '#22C55E'} />
+            <StatRow label="QUESTS"     value={`${player.streaks?.weekly ?? 0}WK`} color="var(--sl-muted)" />
+          </div>
+        </div>
       </div>
-      
-      {/* Footer - Certification */}
-      <div 
-        className={`px-6 py-2 text-center text-xs border-t ${
-          darkMode ? 'border-cyan-900/50 text-gray-500' : 'border-cyan-200 text-gray-500'
-        }`}
-      >
-        This individual has been certified to work as a hunter by the Hunter's Association
-      </div>
-      
-      {/* Decorative Corner Elements */}
-      <div className="absolute top-16 left-2 w-4 h-4 border-l-2 border-t-2 border-cyan-500/30" />
-      <div className="absolute top-16 right-2 w-4 h-4 border-r-2 border-t-2 border-cyan-500/30" />
-      <div className="absolute bottom-8 left-2 w-4 h-4 border-l-2 border-b-2 border-cyan-500/30" />
-      <div className="absolute bottom-8 right-2 w-4 h-4 border-r-2 border-b-2 border-cyan-500/30" />
-      
-      {/* CSS for shimmer animation */}
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-      `}</style>
+
+      {/* Corner accents */}
+      <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2" style={{ borderColor: rankData.color }} />
+      <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2" style={{ borderColor: rankData.color }} />
+      <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2" style={{ borderColor: rankData.color }} />
+      <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2" style={{ borderColor: rankData.color }} />
     </div>
   );
 };

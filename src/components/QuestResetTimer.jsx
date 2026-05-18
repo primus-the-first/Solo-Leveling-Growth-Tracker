@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Clock, RefreshCw } from 'lucide-react';
+import { SLClock, SLRefresh } from './icons/SLIcons';
 import { useQuestTimer } from '../hooks/useQuestTimer';
 
 const QuestResetTimer = ({ resetType, onReset, darkMode = true }) => {
@@ -29,13 +29,13 @@ const QuestResetTimer = ({ resetType, onReset, darkMode = true }) => {
   
   return (
     <div className={`flex items-center gap-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-      <Clock className={`w-4 h-4 ${colors[resetType] || 'text-gray-400'}`} />
+      <SLClock size={14} className={colors[resetType] || 'text-gray-400'} />
       <span>{labels[resetType] || 'Reset'} in</span>
       <span className={`font-mono font-semibold ${colors[resetType] || 'text-gray-300'}`}>
         {formattedTime}
       </span>
       {shouldReset && (
-        <RefreshCw className="w-4 h-4 animate-spin text-green-400" />
+        <SLRefresh size={14} className="animate-spin" style={{ color: '#22C55E' }} />
       )}
     </div>
   );

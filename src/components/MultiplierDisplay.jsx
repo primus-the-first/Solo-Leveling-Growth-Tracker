@@ -1,4 +1,4 @@
-import { TrendingUp, Flame, Sparkles } from 'lucide-react';
+import { SLTrend, SLFlame, SLSystemEye } from './icons/SLIcons';
 import PropTypes from 'prop-types';
 
 const MultiplierDisplay = ({ multiplier, streakDays, darkMode = true }) => {
@@ -42,7 +42,7 @@ const MultiplierDisplay = ({ multiplier, streakDays, darkMode = true }) => {
             tier === 'rare' ? 'bg-cyan-500/20' :
             darkMode ? 'bg-gray-700' : 'bg-gray-200'
           }`}>
-            <TrendingUp className={`w-5 h-5 ${
+            <SLTrend size={18} className={`${
               tier === 'legendary' ? 'text-amber-400' :
               tier === 'epic' ? 'text-purple-400' :
               tier === 'rare' ? 'text-cyan-400' :
@@ -56,7 +56,7 @@ const MultiplierDisplay = ({ multiplier, streakDays, darkMode = true }) => {
                 {multiplier.toFixed(2)}x
               </span>
               {tier !== 'common' && (
-                <Sparkles className={`w-4 h-4 ${
+                <SLSystemEye size={14} className={`${
                   tier === 'legendary' ? 'text-amber-400' :
                   tier === 'epic' ? 'text-purple-400' :
                   'text-cyan-400'
@@ -89,7 +89,7 @@ const MultiplierDisplay = ({ multiplier, streakDays, darkMode = true }) => {
       {/* Streak contribution */}
       {streakDays > 0 && (
         <div className={`mt-3 pt-3 border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-200'} flex items-center gap-2`}>
-          <Flame className="w-4 h-4 text-orange-400" />
+          <SLFlame size={14} style={{ color: '#F97316' }} />
           <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             {streakDays} day streak active
           </span>

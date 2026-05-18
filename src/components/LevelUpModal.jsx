@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Trophy, Zap, Star, Sparkles } from 'lucide-react';
+import { SLTrophy, SLZap, SLCrystal, SLSystemEye } from './icons/SLIcons';
 import gsap from 'gsap';
 
 // Pre-generated static particles (seeded positions for demo)
@@ -137,7 +137,7 @@ const LevelUpModal = ({ isVisible, level, title, xpBonus, onClose, onShow }) => 
         {/* Icon */}
         <div className="mb-6 mt-4">
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/30">
-            <Trophy className="w-12 h-12 text-amber-400" />
+            <SLTrophy size={48} style={{ color: '#F59E0B' }} />
           </div>
         </div>
         
@@ -161,12 +161,12 @@ const LevelUpModal = ({ isVisible, level, title, xpBonus, onClose, onShow }) => 
         <div className="flex justify-center gap-4 mb-6">
           {xpBonus && (
             <div className="flex items-center gap-2 px-4 py-2 bg-green-500/20 rounded-lg border border-green-500/30">
-              <Zap className="w-5 h-5 text-green-400" />
+              <SLZap size={18} style={{ color: '#22C55E' }} />
               <span className="text-green-300 font-semibold">+{xpBonus} XP</span>
             </div>
           )}
           <div className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 rounded-lg border border-purple-500/30">
-            <Star className="w-5 h-5 text-purple-400" />
+            <SLCrystal size={18} style={{ color: '#A855F7' }} />
             <span className="text-purple-300 font-semibold">New Title</span>
           </div>
         </div>
@@ -179,7 +179,7 @@ const LevelUpModal = ({ isVisible, level, title, xpBonus, onClose, onShow }) => 
             boxShadow: '0 0 30px rgba(34, 211, 238, 0.4)',
           }}
         >
-          <Sparkles className="w-5 h-5" />
+          <SLSystemEye size={18} />
           Continue
         </button>
       </div>

@@ -1,139 +1,127 @@
 import { useRef } from 'react';
-import { Skull, Zap, Trophy, Lock, CheckCircle2 } from 'lucide-react';
 import gsap from 'gsap';
+import { SLSkull, SLZap, SLTrophy, SLLock, SLQuestDone, SLSwords } from './icons/SLIcons';
 
 const BossCard = ({ boss, playerLevel, onChallenge, darkMode = true }) => {
-  const cardRef = useRef(null);
-  
+  const cardRef  = useRef(null);
   const isUnlocked = playerLevel >= boss.levelRequired;
   const isDefeated = boss.defeated;
-  
-  // Hover animation
+
+  const accentColor = isDefeated ? '#22C55E' : isUnlocked ? '#EF4444' : '#4A5568';
+
   const handleMouseEnter = () => {
     if (cardRef.current && isUnlocked && !isDefeated) {
-      gsap.to(cardRef.current, {
-        scale: 1.02,
-        boxShadow: '0 0 40px rgba(239, 68, 68, 0.4)',
-        duration: 0.3,
-        ease: 'power2.out'
-      });
+      gsap.to(cardRef.current, { scale: 1.015, boxShadow: `0 0 30px ${accentColor}35`, duration: 0.25, ease: 'power2.out' });
     }
   };
-  
   const handleMouseLeave = () => {
     if (cardRef.current) {
-      gsap.to(cardRef.current, {
-        scale: 1,
-        boxShadow: isDefeated 
-          ? '0 0 20px rgba(74, 222, 128, 0.2)' 
-          : '0 0 20px rgba(239, 68, 68, 0.2)',
-        duration: 0.3,
-        ease: 'power2.out'
-      });
+      gsap.to(cardRef.current, { scale: 1, boxShadow: `0 0 12px ${accentColor}18`, duration: 0.25, ease: 'power2.out' });
     }
   };
 
   return (
     <div
       ref={cardRef}
-      className={`
-        relative p-5 rounded-2xl transition-all duration-300
-        ${isDefeated 
-          ? 'bg-gradient-to-br from-green-900/30 to-gray-900/50 border border-green-500/30' 
-          : isUnlocked 
-            ? 'bg-gradient-to-br from-red-900/30 to-gray-900/50 border border-red-500/30' 
-            : 'bg-gray-900/50 border border-gray-700/30 opacity-60'
-        }
-      `}
+      className="relative overflow-hidden"
       style={{
-        boxShadow: isDefeated 
-          ? '0 0 20px rgba(74, 222, 128, 0.2)' 
-          : isUnlocked 
-            ? '0 0 20px rgba(239, 68, 68, 0.2)' 
-            : 'none'
+        borderRadius: '4px',
+        border: `1px solid ${accentColor}30`,
+        borderTop: `2px solid ${accentColor}`,
+        background: 'var(--sl-panel)',
+        boxShadow: `0 0 12px ${accentColor}18`,
+        padding: '1.1rem',
+        opacity: !isUnlocked ? 0.55 : 1,
+        transition: 'box-shadow 0.25s ease, opacity 0.2s',
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Status Badge */}
-      <div className="absolute -top-2 -right-2">
+      {/* Status chip */}
+      <div className="absolute top-2 right-2">
         {isDefeated ? (
-          <div className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" />
-            DEFEATED
+          <div className="flex items-center gap-1 px-2 py-0.5" style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.4)', borderRadius: '2px' }}>
+            <SLQuestDone size={10} style={{ color: '#22C55E' }} />
+            <span style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', color: '#22C55E' }}>DEFEATED</span>
           </div>
         ) : !isUnlocked ? (
-          <div className="px-3 py-1 bg-gray-600 text-gray-300 text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
-            <Lock className="w-3 h-3" />
-            LV.{boss.levelRequired}
+          <div className="flex items-center gap-1 px-2 py-0.5" style={{ background: 'rgba(74,85,104,0.2)', border: '1px solid rgba(74,85,104,0.4)', borderRadius: '2px' }}>
+            <SLLock size={10} style={{ color: '#6B8FC7' }} />
+            <span style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', color: '#6B8FC7' }}>LV.{boss.levelRequired}</span>
           </div>
         ) : null}
       </div>
-      
+
       <div className="flex items-start gap-4">
-        {/* Boss Icon */}
-        <div className={`
-          w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0
-          ${isDefeated 
-            ? 'bg-green-500/20 border border-green-500/30' 
-            : isUnlocked 
-              ? 'bg-red-500/20 border border-red-500/30' 
-              : 'bg-gray-700/50 border border-gray-600/30'
-          }
-        `}>
-          <Skull className={`w-8 h-8 ${
-            isDefeated ? 'text-green-400' : isUnlocked ? 'text-red-400' : 'text-gray-500'
-          }`} />
+        {/* Boss icon */}
+        <div
+          className="flex-shrink-0 flex items-center justify-center"
+          style={{
+            width: '56px', height: '56px',
+            borderRadius: '3px',
+            background: `${accentColor}10`,
+            border: `1px solid ${accentColor}30`,
+          }}
+        >
+          <SLSkull size={28} style={{ color: accentColor }} />
         </div>
-        
-        {/* Boss Info */}
-        <div className="flex-1">
-          <h3 className={`font-bold text-lg mb-1 ${
-            isDefeated ? 'text-green-300 line-through' : isUnlocked ? 'text-red-300' : 'text-gray-500'
-          }`}>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <h3
+            className="font-bold mb-1 truncate"
+            style={{
+              fontFamily: 'Orbitron, sans-serif',
+              fontSize: '0.8rem',
+              letterSpacing: '0.08em',
+              color: isDefeated ? '#22C55E' : isUnlocked ? '#EF4444' : 'var(--sl-muted)',
+              textDecoration: isDefeated ? 'line-through' : 'none',
+            }}
+          >
             {boss.name}
           </h3>
-          <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          <p className="text-sm mb-3" style={{ color: 'var(--sl-muted)', fontFamily: 'Rajdhani, sans-serif' }}>
             {boss.description}
           </p>
-          
-          {/* Rewards */}
+
+          {/* Reward chips */}
           <div className="flex flex-wrap gap-2">
-            <div className={`
-              flex items-center gap-1 px-2 py-1 rounded-lg text-xs
-              ${isDefeated 
-                ? 'bg-green-500/20 text-green-300' 
-                : 'bg-amber-500/20 text-amber-300'
-              }
-            `}>
-              <Zap className="w-3 h-3" />
-              +{boss.xpReward} XP
+            <div className="flex items-center gap-1 px-2 py-0.5" style={{ background: isDefeated ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${isDefeated ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'}`, borderRadius: '2px' }}>
+              <SLZap size={11} style={{ color: isDefeated ? '#22C55E' : '#F59E0B' }} />
+              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '0.65rem', color: isDefeated ? '#22C55E' : '#F59E0B' }}>+{boss.xpReward} XP</span>
             </div>
             {boss.titleReward && (
-              <div className={`
-                flex items-center gap-1 px-2 py-1 rounded-lg text-xs
-                ${isDefeated 
-                  ? 'bg-green-500/20 text-green-300' 
-                  : 'bg-purple-500/20 text-purple-300'
-                }
-              `}>
-                <Trophy className="w-3 h-3" />
-                {boss.titleReward}
+              <div className="flex items-center gap-1 px-2 py-0.5" style={{ background: isDefeated ? 'rgba(34,197,94,0.1)' : 'rgba(168,85,247,0.1)', border: `1px solid ${isDefeated ? 'rgba(34,197,94,0.3)' : 'rgba(168,85,247,0.3)'}`, borderRadius: '2px' }}>
+                <SLTrophy size={11} style={{ color: isDefeated ? '#22C55E' : '#A855F7' }} />
+                <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '0.65rem', color: isDefeated ? '#22C55E' : '#A855F7' }}>{boss.titleReward}</span>
               </div>
             )}
           </div>
         </div>
       </div>
-      
-      {/* Challenge Button */}
+
+      {/* Challenge button */}
       {isUnlocked && !isDefeated && (
         <button
           onClick={() => onChallenge?.(boss)}
-          className="w-full mt-4 py-2 bg-gradient-to-r from-red-600 to-orange-500 text-white font-bold rounded-lg hover:from-red-500 hover:to-orange-400 transition-all"
+          className="w-full mt-4 flex items-center justify-center gap-2 py-2 transition-all duration-200 hover:scale-[1.02]"
+          style={{
+            background: 'linear-gradient(90deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))',
+            border: '1px solid rgba(239,68,68,0.5)',
+            borderRadius: '3px',
+            fontFamily: 'Orbitron, sans-serif',
+            fontSize: '0.65rem',
+            letterSpacing: '0.15em',
+            color: '#EF4444',
+          }}
         >
-          ⚔️ Challenge Boss
+          <SLSwords size={14} />
+          CHALLENGE BOSS
         </button>
       )}
+
+      {/* Corner marks */}
+      <div className="absolute bottom-0 left-0 w-2 h-2 border-l border-b" style={{ borderColor: `${accentColor}40` }} />
     </div>
   );
 };

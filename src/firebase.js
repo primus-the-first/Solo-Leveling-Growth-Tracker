@@ -2,7 +2,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -21,6 +20,13 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+
+// Analytics is loaded dynamically — ad blockers block the bundle and would crash the app otherwise
+export let analytics = null;
+if (typeof window !== 'undefined' && import.meta.env.VITE_FIREBASE_MEASUREMENT_ID) {
+  import('firebase/analytics')
+    .then(({ getAnalytics }) => { analytics = getAnalytics(app); })
+    .catch(() => {}); // silently skip if blocked
+}
 
 export default app;

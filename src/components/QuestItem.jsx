@@ -1,113 +1,108 @@
 import { useRef } from 'react';
-import { Circle, CheckCircle2 } from 'lucide-react';
 import gsap from 'gsap';
+import { SLQuestBox, SLQuestDone } from './icons/SLIcons';
+
+const VARIANT = {
+  daily: {
+    doneColor:  '#22C55E',
+    glow:       '0 0 16px rgba(34,197,94,0.35)',
+    badgeBg:    'rgba(34,197,94,0.12)',
+    badgeBorder:'rgba(34,197,94,0.4)',
+    badgeText:  '#22C55E',
+  },
+  weekly: {
+    doneColor:  '#A855F7',
+    glow:       '0 0 16px rgba(168,85,247,0.35)',
+    badgeBg:    'rgba(168,85,247,0.12)',
+    badgeBorder:'rgba(168,85,247,0.4)',
+    badgeText:  '#A855F7',
+  },
+  monthly: {
+    doneColor:  '#F59E0B',
+    glow:       '0 0 16px rgba(245,158,11,0.35)',
+    badgeBg:    'rgba(245,158,11,0.12)',
+    badgeBorder:'rgba(245,158,11,0.4)',
+    badgeText:  '#F59E0B',
+  },
+};
 
 const QuestItem = ({ quest, onToggle, variant = 'daily', darkMode = true }) => {
-  const itemRef = useRef(null);
+  const itemRef  = useRef(null);
   const checkRef = useRef(null);
+  const v = VARIANT[variant] || VARIANT.daily;
 
   const handleClick = () => {
-    // Animate the check icon
     if (!quest.completed) {
       gsap.fromTo(checkRef.current,
-        { scale: 0, rotation: -180 },
-        { scale: 1, rotation: 0, duration: 0.4, ease: 'back.out(2)' }
+        { scale: 0, rotation: -90 },
+        { scale: 1, rotation: 0, duration: 0.35, ease: 'back.out(2)' }
       );
-      
-      // Success pulse on the item
       gsap.to(itemRef.current, {
-        boxShadow: variant === 'daily' 
-          ? '0 0 30px rgba(74, 222, 128, 0.5)' 
-          : variant === 'weekly'
-            ? '0 0 30px rgba(168, 85, 247, 0.5)'
-            : '0 0 30px rgba(251, 191, 36, 0.5)',
-        duration: 0.3,
-        yoyo: true,
-        repeat: 1
+        boxShadow: v.glow, duration: 0.25, yoyo: true, repeat: 1,
       });
     } else {
-      gsap.to(checkRef.current, {
-        scale: 0,
-        duration: 0.2,
-        ease: 'power2.in'
-      });
+      gsap.to(checkRef.current, { scale: 0, duration: 0.18, ease: 'power2.in' });
     }
-    
     onToggle(quest.id);
   };
-
-  // Color variants
-  const colors = {
-    daily: {
-      completed: 'text-green-400',
-      border: 'border-green-500/30',
-      glow: '0 0 20px rgba(74, 222, 128, 0.3)',
-      badge: 'bg-green-500/20 border-green-500/50 text-green-300',
-    },
-    weekly: {
-      completed: 'text-purple-400',
-      border: 'border-purple-500/30',
-      glow: '0 0 20px rgba(168, 85, 247, 0.3)',
-      badge: 'bg-purple-500/20 border-purple-500/50 text-purple-300',
-    },
-    monthly: {
-      completed: 'text-amber-400',
-      border: 'border-amber-500/30',
-      glow: '0 0 20px rgba(251, 191, 36, 0.3)',
-      badge: 'bg-amber-500/20 border-amber-500/50 text-amber-300',
-    },
-  };
-
-  const variantColors = colors[variant] || colors.daily;
 
   return (
     <div
       ref={itemRef}
       onClick={handleClick}
-      className={`
-        quest-item group
-        ${quest.completed ? `completed ${variant}` : ''}
-        ${quest.completed ? variantColors.border : (darkMode ? '' : 'border-gray-200')}
-        ${darkMode ? '' : 'bg-gray-50'}
-      `}
-      style={{
-        boxShadow: quest.completed ? variantColors.glow : 'none'
-      }}
+      className={`quest-item group ${quest.completed ? `completed ${variant}` : ''}`}
+      style={{ boxShadow: quest.completed ? v.glow : 'none' }}
     >
-      {/* Checkbox */}
+      {/* Checkbox icon */}
       <div ref={checkRef} className="flex-shrink-0">
-        {quest.completed ? (
-          <CheckCircle2 className={`w-6 h-6 ${variantColors.completed}`} />
-        ) : (
-          <Circle className={`w-6 h-6 ${darkMode ? 'text-gray-600 group-hover:text-gray-400' : 'text-gray-400 group-hover:text-gray-600'} transition-colors`} />
-        )}
+        {quest.completed
+          ? <SLQuestDone size={22} style={{ color: v.doneColor }} />
+          : <SLQuestBox  size={22} style={{ color: darkMode ? '#2B5080' : '#94A3B8' }}
+              className="group-hover:!text-[var(--sl-blue)] transition-colors" />
+        }
       </div>
 
-      {/* Task Text */}
-      <span className={`
-        flex-1 transition-all duration-300
-        ${quest.completed 
-          ? 'line-through text-gray-500' 
-          : darkMode 
-            ? 'text-gray-300 group-hover:text-white' 
-            : 'text-gray-700 group-hover:text-gray-900'
-        }
-      `}>
+      {/* Task text */}
+      <span
+        className="flex-1 text-sm transition-all duration-200"
+        style={{
+          color: quest.completed
+            ? 'var(--sl-muted)'
+            : darkMode ? 'var(--sl-white)' : '#1e293b',
+          textDecoration: quest.completed ? 'line-through' : 'none',
+          fontFamily: 'Rajdhani, sans-serif',
+          fontWeight: 500,
+          letterSpacing: '0.02em',
+        }}
+      >
         {quest.task}
       </span>
 
-      {/* Pillar Tag */}
+      {/* Pillar tag */}
       {quest.pillar && (
-        <span className={`text-xs px-2 py-0.5 rounded-full ${darkMode ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-200 text-gray-600'}`}>
-          {quest.pillar}
+        <span
+          className="text-xs px-1.5 py-0.5 hidden sm:inline"
+          style={{
+            fontFamily: 'Share Tech Mono, monospace',
+            fontSize: '0.6rem',
+            color: 'var(--sl-muted)',
+            border: '1px solid rgba(78,154,254,0.15)',
+            borderRadius: '2px',
+          }}
+        >
+          {quest.pillar.toUpperCase()}
         </span>
       )}
 
-      {/* XP Badge */}
-      <div className={`
-        xp-badge transition-all duration-300
-        ${quest.completed ? variantColors.badge : ''}
-      `}>
+      {/* XP badge */}
+      <div
+        className="xp-badge flex-shrink-0"
+        style={quest.completed ? {
+          background: v.badgeBg,
+          borderColor: v.badgeBorder,
+          color: v.badgeText,
+        } : {}}
+      >
         +{quest.xp} XP
       </div>
     </div>

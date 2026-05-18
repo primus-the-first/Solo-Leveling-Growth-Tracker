@@ -1,76 +1,89 @@
 import { useRef } from 'react';
 import gsap from 'gsap';
 
+const TABS = [
+  { id: 'overview', label: 'OVERVIEW' },
+  { id: 'daily',    label: 'DAILY'    },
+  { id: 'weekly',   label: 'WEEKLY'   },
+  { id: 'monthly',  label: 'MONTHLY'  },
+  { id: 'journal',  label: 'JOURNAL'  },
+  { id: 'stats',    label: 'STATS'    },
+];
+
 const TabNavigation = ({ activeTab, setActiveTab, darkMode }) => {
   const tabsRef = useRef([]);
-  const indicatorRef = useRef(null);
-  const containerRef = useRef(null);
-
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'daily', label: 'Daily' },
-    { id: 'weekly', label: 'Weekly' },
-    { id: 'monthly', label: 'Monthly' },
-    { id: 'journal', label: 'Journal' },
-    { id: 'stats', label: 'Stats' },
-  ];
+  const dark    = darkMode !== false;
 
   const handleTabClick = (tabId) => {
-    // Animate the clicked tab
-    const tabIndex = tabs.findIndex(t => t.id === tabId);
-    gsap.to(tabsRef.current[tabIndex], {
-      scale: 0.95,
-      duration: 0.1,
-      yoyo: true,
-      repeat: 1,
-      ease: 'power2.inOut'
+    const idx = TABS.findIndex(t => t.id === tabId);
+    gsap.to(tabsRef.current[idx], {
+      scale: 0.94, duration: 0.08, yoyo: true, repeat: 1, ease: 'power2.inOut',
     });
-    
     setActiveTab(tabId);
   };
 
   return (
-    <nav ref={containerRef} className="flex justify-center mb-8 relative z-20">
-      <div className="glass-card p-1 rounded-xl flex items-center gap-1 relative">
-        {/* Animated Background Indicator */}
-        <div 
-          ref={indicatorRef}
-          className="absolute h-full top-0 rounded-lg bg-gray-800/50 hidden"
-        />
-
-        {tabs.map((tab, index) => (
-          <button
-            key={tab.id}
-            ref={el => tabsRef.current[index] = el}
-            onClick={() => handleTabClick(tab.id)}
-            className={`
-              tab-button group relative overflow-hidden animate-enter px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300
-              ${activeTab === tab.id 
-                ? `bg-gradient-to-r from-cyan-500/20 to-purple-500/20 shadow-lg ${darkMode ? 'text-cyan-300' : 'text-cyan-700'}` 
-                : `${darkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-white/5' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'}`
-              }
-            `}
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            {/* Active Tab Glow */}
-            {activeTab === tab.id && (
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 animate-pulse" />
-            )}
-            <span className="relative z-10">{tab.label}</span>
-            
-            {/* Active Indicator */}
-            {activeTab === tab.id && (
-              <div 
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500"
-                style={{ boxShadow: '0 0 10px rgba(34, 211, 238, 0.8)' }}
-              />
-            )}
-          </button>
-        ))}
+    <nav className="w-full mb-6 relative z-20">
+      {/* outer container */}
+      <div
+        className="flex items-end gap-0 overflow-x-auto"
+        style={{
+          borderBottom: dark
+            ? '1px solid rgba(78,154,254,0.18)'
+            : '1px solid rgba(78,154,254,0.2)',
+        }}
+      >
+        {TABS.map((tab, index) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              ref={el => tabsRef.current[index] = el}
+              onClick={() => handleTabClick(tab.id)}
+              className="animate-enter flex-shrink-0"
+              style={{
+                animationDelay: `${index * 60}ms`,
+                fontFamily: 'Orbitron, sans-serif',
+                fontSize: '0.62rem',
+                letterSpacing: '0.15em',
+                fontWeight: 600,
+                padding: '0.6rem 1.1rem',
+                cursor: 'pointer',
+                transition: 'color 0.2s, background 0.2s',
+                position: 'relative',
+                color: isActive
+                  ? 'var(--sl-blue)'
+                  : dark ? 'var(--sl-muted)' : '#64748b',
+                background: isActive
+                  ? dark ? 'rgba(78,154,254,0.08)' : 'rgba(78,154,254,0.06)'
+                  : 'transparent',
+                borderTop: isActive ? '1px solid rgba(78,154,254,0.3)' : '1px solid transparent',
+                borderLeft: isActive ? '1px solid rgba(78,154,254,0.15)' : '1px solid transparent',
+                borderRight: isActive ? '1px solid rgba(78,154,254,0.15)' : '1px solid transparent',
+                borderBottom: isActive ? '1px solid var(--sl-panel)' : '1px solid transparent',
+                marginBottom: '-1px',
+                borderRadius: '3px 3px 0 0',
+              }}
+            >
+              {isActive && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0,
+                    height: '2px',
+                    background: 'linear-gradient(90deg, #4E9AFE, #76FFFA)',
+                    boxShadow: '0 0 8px rgba(78,154,254,0.8)',
+                    borderRadius: '2px 2px 0 0',
+                  }}
+                />
+              )}
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
     </nav>
   );
 };
 
 export default TabNavigation;
-

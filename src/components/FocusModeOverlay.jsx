@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Circle, Flame, XCircle } from 'lucide-react';
+import { SLAlert, SLClock, SLQuestDone, SLQuestBox, SLFlame, SLClose } from './icons/SLIcons';
 import gsap from 'gsap';
 
 const FocusModeOverlay = ({ 
@@ -70,7 +70,7 @@ const FocusModeOverlay = ({
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/20 mb-4">
-            <AlertTriangle className="w-10 h-10 text-red-400 animate-pulse" />
+            <SLAlert size={40} style={{ color: '#EF4444' }} className="animate-pulse" />
           </div>
           
           <h1 className="text-2xl md:text-3xl font-bold text-red-400 font-display tracking-wider mb-2">
@@ -87,7 +87,7 @@ const FocusModeOverlay = ({
         {/* Timer */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 text-gray-400 text-sm mb-2">
-            <Clock className="w-4 h-4" />
+            <SLClock size={16} />
             <span>Time in Focus Mode</span>
           </div>
           <div className="text-4xl font-mono font-bold text-red-300">
@@ -103,7 +103,7 @@ const FocusModeOverlay = ({
         {/* Recovery Tasks */}
         <div className="mb-8">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-            <Flame className="w-5 h-5 text-orange-400" />
+            <SLFlame size={18} style={{ color: '#F97316' }} />
             Complete these tasks to exit:
           </h3>
           
@@ -134,9 +134,9 @@ const FocusModeOverlay = ({
                 }}
               >
                 {quest.completed ? (
-                  <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0" />
+                  <SLQuestDone size={22} style={{ color: '#22C55E', flexShrink: 0 }} />
                 ) : (
-                  <Circle className="w-6 h-6 text-gray-500 flex-shrink-0" />
+                  <SLQuestBox size={22} style={{ color: '#4A5568', flexShrink: 0 }} />
                 )}
                 
                 <span className={`flex-1 ${quest.completed ? 'text-gray-400 line-through' : 'text-gray-300'}`}>

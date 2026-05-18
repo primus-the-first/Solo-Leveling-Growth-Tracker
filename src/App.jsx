@@ -86,6 +86,8 @@ function Dashboard() {
   
   // Player State
   const [player, setPlayer] = useState(() => loadState('player', DEFAULT_PLAYER));
+  const xpMultiplierRef = useRef(player.xpMultiplier);
+  useEffect(() => { xpMultiplierRef.current = player.xpMultiplier; }, [player.xpMultiplier]);
   
   // Pillars State (now as object)
   const [pillars, setPillars] = useState(() => loadState('pillars', DEFAULT_PILLARS));
@@ -110,6 +112,9 @@ function Dashboard() {
 
   // Quest Editor Mode
   const [editMode, setEditMode] = useState(false);
+
+  // Reset edit mode whenever the user switches tabs
+  useEffect(() => { setEditMode(false); }, [activeTab]);
 
   // System Window State
   const [showSystemWindow, setShowSystemWindow] = useState(false);
@@ -171,8 +176,18 @@ function Dashboard() {
   // Active boss battle
   const [activeBattle, setActiveBattle] = useState(null);
 
-  // Penalty Timer State
-  const [penaltyTimeRemaining, setPenaltyTimeRemaining] = useState(() => loadState('penaltyTime', 15 * 60));
+  // Stable ref for lastVisitDate — read once on mount, not on every render
+  const lastVisitDateRef = useRef(loadState('lastVisitDate', null));
+
+  // Penalty Timer State — derived from startTime so closing/reopening the app doesn't freeze the clock
+  const [penaltyTimeRemaining, setPenaltyTimeRemaining] = useState(() => {
+    const mode = loadState('penaltyMode', { active: false, startTime: null });
+    if (mode.active && mode.startTime) {
+      const elapsed = Math.floor((Date.now() - mode.startTime) / 1000);
+      return Math.max(0, (15 * 60) - elapsed);
+    }
+    return 15 * 60;
+  });
 
   // Penalty Timer Effect
   // Penalty Timer Effect
@@ -185,11 +200,6 @@ function Dashboard() {
     }
     return () => clearInterval(timer);
   }, [penaltyMode.active]);
-
-  // Persist penalty timer
-  useEffect(() => {
-    saveState('penaltyTime', penaltyTimeRemaining);
-  }, [penaltyTimeRemaining]);
 
   // ============ PERSISTENCE ============
   
@@ -296,56 +306,35 @@ function Dashboard() {
   // ============ XP SYSTEM ============
   
   // Add XP to player and optionally a pillar
-  const addXP = (amount, pillarId = null) => {
-    // Apply multiplier
-    const multipliedXP = Math.round(amount * player.xpMultiplier);
-    
-    // Play XP gain sound
+  const addXP = useCallback((amount, pillarId = null) => {
+    const multipliedXP = Math.round(amount * xpMultiplierRef.current);
+
     playXPGain();
-    
-    // Update player XP
+
     setPlayer(prev => {
       const newTotalXP = prev.totalXP + multipliedXP;
       const { level, title } = calculateLevel(newTotalXP);
-      
-      return {
-        ...prev,
-        totalXP: newTotalXP,
-        level,
-        title,
-      };
+      return { ...prev, totalXP: newTotalXP, level, title };
     });
-    
-    // Update pillar XP if specified
-    if (pillarId && pillars[pillarId]) {
+
+    if (pillarId) {
       setPillars(prev => {
+        if (!prev[pillarId]) return prev;
         const pillar = prev[pillarId];
         const newXP = pillar.xp + multipliedXP;
-        const newLevel = Math.floor(newXP / 100) + 1; // Simple level calc for pillars
-        
-        return {
-          ...prev,
-          [pillarId]: {
-            ...pillar,
-            xp: newXP,
-            level: newLevel,
-          }
-        };
+        const newLevel = Math.floor(newXP / 100) + 1;
+        return { ...prev, [pillarId]: { ...pillar, xp: newXP, level: newLevel } };
       });
     }
-    
-    // Update history
+
     const today = new Date().toISOString().split('T')[0];
     setHistory(prev => ({
       ...prev,
-      [today]: {
-        xp: (prev[today]?.xp || 0) + multipliedXP,
-        completed: true,
-      }
+      [today]: { xp: (prev[today]?.xp || 0) + multipliedXP, completed: true },
     }));
-    
+
     return multipliedXP;
-  };
+  }, [playXPGain]);
   
   // Handle boss defeat - defined after addXP
   const handleBossDefeat = (boss) => {
@@ -380,58 +369,6 @@ function Dashboard() {
     setTimeout(() => checkAchievements(), 500);
   };
 
-  // ============ QUEST HANDLERS ============
-  
-  const toggleDailyQuest = (id) => {
-    setDailyQuests(prev =>
-      prev.map(quest => {
-        if (quest.id === id) {
-          if (!quest.completed) {
-            addXP(quest.xp, quest.pillar);
-            playQuestComplete();
-            // Check achievements after quest completion
-            setTimeout(() => checkAchievements(), 100);
-          }
-          return { ...quest, completed: !quest.completed };
-        }
-        return quest;
-      })
-    );
-  };
-
-  const toggleWeeklyQuest = (id) => {
-    setWeeklyQuests(prev =>
-      prev.map(quest => {
-        if (quest.id === id) {
-          if (!quest.completed) {
-            addXP(quest.xp, quest.pillar);
-            playQuestComplete();
-            // Check achievements after quest completion
-            setTimeout(() => checkAchievements(), 100);
-          }
-          return { ...quest, completed: !quest.completed };
-        }
-        return quest;
-      })
-    );
-  };
-
-  const toggleMonthlyQuest = (id) => {
-    setMonthlyQuests(prev =>
-      prev.map(quest => {
-        if (quest.id === id) {
-          if (!quest.completed) {
-            addXP(quest.xp, quest.pillar);
-            playQuestComplete();
-            // Check achievements after quest completion
-            setTimeout(() => checkAchievements(), 100);
-          }
-          return { ...quest, completed: !quest.completed };
-        }
-        return quest;
-      })
-    );
-  };
 
   // ============ QUEST RESET HANDLERS ============
 
@@ -453,13 +390,9 @@ function Dashboard() {
   // ============ STREAK SYSTEM ============
   
   // Check and update streaks (call this on app load/day change)
-  // eslint-disable-next-line no-unused-vars
   const updateStreaks = (questsOverride) => {
-    // Use provided quests or fall back to current state
     const quests = questsOverride || dailyQuests;
-    // eslint-disable-next-line no-unused-vars
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    
+
     // Check if all daily quests were completed
     const allDailyCompleted = quests.every(q => q.completed);
     
@@ -571,6 +504,21 @@ function Dashboard() {
       return achievement;
     }));
   }, [dailyQuests, weeklyQuests, monthlyQuests, player.streaks.daily, player.penalties, bossBattles, addXP, showXPToast]);
+
+  // ============ QUEST HANDLERS ============
+
+  const toggleQuest = useCallback((type, id) => {
+    const setters = { daily: setDailyQuests, weekly: setWeeklyQuests, monthly: setMonthlyQuests };
+    setters[type](prev => prev.map(quest => {
+      if (quest.id !== id) return quest;
+      if (!quest.completed) {
+        addXP(quest.xp, quest.pillar);
+        playQuestComplete();
+        setTimeout(() => checkAchievements(), 100);
+      }
+      return { ...quest, completed: !quest.completed };
+    }));
+  }, [addXP, playQuestComplete, checkAchievements]);
 
   // ============ PENALTY HANDLERS ============
   
@@ -718,7 +666,7 @@ function Dashboard() {
                   <QuestItem
                     key={quest.id}
                     quest={quest}
-                    onToggle={toggleDailyQuest}
+                    onToggle={(id) => toggleQuest('daily', id)}
                     variant="daily"
                     darkMode={darkMode}
                   />
@@ -782,7 +730,7 @@ function Dashboard() {
                   <QuestItem
                     key={quest.id}
                     quest={quest}
-                    onToggle={toggleWeeklyQuest}
+                    onToggle={(id) => toggleQuest('weekly', id)}
                     variant="weekly"
                     darkMode={darkMode}
                   />
@@ -846,7 +794,7 @@ function Dashboard() {
                   <QuestItem
                     key={quest.id}
                     quest={quest}
-                    onToggle={toggleMonthlyQuest}
+                    onToggle={(id) => toggleQuest('monthly', id)}
                     variant="monthly"
                     darkMode={darkMode}
                   />
@@ -1007,7 +955,7 @@ function Dashboard() {
       {showPreloader && (
         <DailyQuestPopup 
           dailyQuests={dailyQuests}
-          lastVisitDate={loadState('lastVisitDate', null)}
+          lastVisitDate={lastVisitDateRef.current}
           onAccept={() => {
             setShowPreloader(false);
             saveState('lastVisitDate', new Date().toDateString());

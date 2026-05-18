@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Upload, Trash2, X, Settings, Sun, Moon, LogOut } from 'lucide-react';
+import { SLDownload, SLUpload, SLTrash, SLClose, SLGear, SLSun, SLMoon, SLLogOut } from './icons/SLIcons';
 import gsap from 'gsap';
 import { exportSaveData, importSaveData } from '../gameState';
 import { useAuth } from '../context/AuthContext';
@@ -109,8 +109,8 @@ const SettingsModal = ({ isVisible, onClose, darkMode, setDarkMode }) => {
       >
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
-            <Settings className={`w-5 h-5 ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
-            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>System Settings</h2>
+            <SLGear size={18} style={{ color: 'var(--sl-blue)' }} />
+            <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '0.85rem', letterSpacing: '0.15em', color: darkMode ? 'var(--sl-white)' : '#0A1628' }}>SYSTEM SETTINGS</h2>
           </div>
           <button 
             onClick={onClose}
@@ -118,7 +118,7 @@ const SettingsModal = ({ isVisible, onClose, darkMode, setDarkMode }) => {
               darkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
             }`}
           >
-            <X className="w-5 h-5" />
+            <SLClose size={18} />
           </button>
         </div>
 
@@ -138,7 +138,7 @@ const SettingsModal = ({ isVisible, onClose, darkMode, setDarkMode }) => {
                     : 'border-cyan-200 hover:bg-cyan-50 text-cyan-700'
                 }`}
               >
-                <Download className="w-6 h-6" />
+                <SLDownload size={22} />
                 <span className="text-sm font-medium">Export Save</span>
               </button>
 
@@ -150,7 +150,7 @@ const SettingsModal = ({ isVisible, onClose, darkMode, setDarkMode }) => {
                     : 'border-purple-200 hover:bg-purple-50 text-purple-700'
                 }`}
               >
-                <Upload className="w-6 h-6" />
+                <SLUpload size={22} />
                 <span className="text-sm font-medium">Import Save</span>
               </button>
               <input 
@@ -166,7 +166,7 @@ const SettingsModal = ({ isVisible, onClose, darkMode, setDarkMode }) => {
           <div className={`p-4 rounded-xl border ${darkMode ? 'bg-red-900/10 border-red-500/20' : 'bg-red-50 border-red-100'}`}>
             <div className="flex items-start gap-3">
               <div className="p-2 bg-red-500/10 rounded-lg">
-                <Trash2 className="w-5 h-5 text-red-500" />
+                <SLTrash size={18} style={{ color: '#EF4444' }} />
               </div>
               <div className="flex-1">
                 <h3 className={`font-semibold text-sm ${darkMode ? 'text-red-400' : 'text-red-600'}`}>Reset Progress</h3>
@@ -196,9 +196,9 @@ const SettingsModal = ({ isVisible, onClose, darkMode, setDarkMode }) => {
             >
               <div className="flex items-center gap-3">
                 {darkMode ? (
-                  <Sun className="w-5 h-5 text-amber-400" />
+                  <SLSun size={18} style={{ color: '#F59E0B' }} />
                 ) : (
-                  <Moon className="w-5 h-5 text-blue-500" />
+                  <SLMoon size={18} style={{ color: '#4E9AFE' }} />
                 )}
                 <span className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                   {darkMode ? 'Light Mode' : 'Dark Mode'}
@@ -225,7 +225,7 @@ const SettingsModal = ({ isVisible, onClose, darkMode, setDarkMode }) => {
                     : 'border-red-200 hover:bg-red-50 text-red-600'
                 }`}
               >
-                <LogOut className="w-5 h-5" />
+                <SLLogOut size={18} />
                 <span className="font-medium">Logout</span>
               </button>
             </div>

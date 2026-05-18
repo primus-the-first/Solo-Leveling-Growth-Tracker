@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, ChevronDown } from 'lucide-react';
+import { SLClose, SLSend, SLSystemEye, SLChevronDown } from './icons/SLIcons';
 import { generateSystemResponse } from '../services/systemResponses';
 
 const SystemWindow = ({ 
@@ -119,9 +119,9 @@ const SystemWindow = ({
         }`}>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Sparkles className="w-6 h-6 text-cyan-400" />
-              <div className="absolute inset-0 animate-ping opacity-50">
-                <Sparkles className="w-6 h-6 text-cyan-400" />
+              <SLSystemEye size={22} style={{ color: 'var(--sl-blue)' }} />
+              <div className="absolute inset-0 animate-ping opacity-30 pointer-events-none">
+                <SLSystemEye size={22} style={{ color: 'var(--sl-blue)' }} />
               </div>
             </div>
             <div>
@@ -142,7 +142,7 @@ const SystemWindow = ({
                 : 'hover:bg-red-100 text-gray-500 hover:text-red-500'
             }`}
           >
-            <X className="w-5 h-5" />
+            <SLClose size={18} />
           </button>
         </div>
 
@@ -162,7 +162,7 @@ const SystemWindow = ({
               }`}>
                 {msg.type === 'system' && (
                   <div className="flex items-center gap-2 mb-2 text-xs text-cyan-400 font-semibold">
-                    <Sparkles className="w-3 h-3" />
+                    <SLSystemEye size={12} />
                     SYSTEM
                   </div>
                 )}
@@ -183,7 +183,7 @@ const SystemWindow = ({
                   : 'bg-gray-100 border border-cyan-500/30'
               }`}>
                 <div className="flex items-center gap-2 text-cyan-400">
-                  <Sparkles className="w-4 h-4 animate-spin" />
+                  <SLSystemEye size={16} style={{ color: 'var(--sl-blue)' }} />
                   <span className="text-sm animate-pulse">The System is analyzing...</span>
                 </div>
               </div>
@@ -243,7 +243,7 @@ const SystemWindow = ({
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
-              <Send className="w-5 h-5" />
+              <SLSend size={18} />
             </button>
           </div>
         </form>

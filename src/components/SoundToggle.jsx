@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import { SLVolume, SLVolumeMute } from './icons/SLIcons';
 import { loadState, saveState } from '../gameState';
 
 const SoundToggle = ({ onToggle, darkMode = true }) => {
@@ -29,9 +29,9 @@ const SoundToggle = ({ onToggle, darkMode = true }) => {
       title={enabled ? 'Sound On' : 'Sound Off'}
     >
       {enabled ? (
-        <Volume2 className="w-5 h-5" />
+        <SLVolume size={20} />
       ) : (
-        <VolumeX className="w-5 h-5" />
+        <SLVolumeMute size={20} />
       )}
     </button>
   );

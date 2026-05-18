@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Trophy, Flame, Zap, Lock, Unlock, Target, Star, TrendingUp, BookOpen } from 'lucide-react';
+import { SLTrophy, SLFlame, SLZap, SLLock, SLCheck, SLTarget, SLCrystal, SLTrend, SLBook } from './icons/SLIcons';
 
 const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel = 100 }) => {
   const containerRef = useRef(null);
@@ -8,10 +8,10 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel
 
   // Player stats for display
   const playerStats = [
-    { label: 'Total XP Earned', value: (player?.totalXP ?? 0).toLocaleString(), icon: Zap },
-    { label: 'Current Level', value: player?.level ?? 0, icon: TrendingUp },
-    { label: 'Current Streak', value: `${player?.streaks?.daily ?? 0} days`, icon: Flame },
-    { label: 'Longest Streak', value: `${player?.streaks?.longestDaily ?? 0} days`, icon: Trophy },
+    { label: 'Total XP Earned', value: (player?.totalXP ?? 0).toLocaleString(), icon: SLZap },
+    { label: 'Current Level', value: player?.level ?? 0, icon: SLTrend },
+    { label: 'Current Streak', value: `${player?.streaks?.daily ?? 0} days`, icon: SLFlame },
+    { label: 'Longest Streak', value: `${player?.streaks?.longestDaily ?? 0} days`, icon: SLTrophy },
   ];
 
   // Dynamic milestones based on actual progress
@@ -27,11 +27,11 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel
 
   // Pillar icons
   const pillarIcons = {
-    personal: Flame,
-    spiritual: Star,
-    financial: TrendingUp,
-    career: Target,
-    education: BookOpen,
+    personal:  SLFlame,
+    spiritual: SLCrystal,
+    financial: SLTrend,
+    career:    SLTarget,
+    education: SLBook,
   };
 
   return (
@@ -65,7 +65,7 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel
         <div className={`glass-card p-6 rounded-2xl animate-enter ${darkMode ? '' : 'bg-white/80'}`}>
           <div className="flex items-center gap-3 mb-6">
             <div className={`p-2 rounded-lg ${darkMode ? 'bg-cyan-500/20' : 'bg-cyan-100'}`}>
-              <Target className={`w-6 h-6 ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
+              <SLTarget size={22} style={{ color: darkMode ? 'var(--sl-blue)' : '#0891b2' }} />
             </div>
             <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Pillar Levels</h3>
           </div>
@@ -74,7 +74,7 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel
             {(Array.isArray(pillars) ? pillars : []).map((p, index) => {
               const pillar = p || {};
               const { id = 'unknown', title = 'Untitled', level = 1, xp = 0 } = pillar;
-              const IconComponent = pillarIcons[id] || Star;
+              const IconComponent = pillarIcons[id] || SLCrystal;
               const requiredXP = Math.max(1, pillar.xpRequired || xpPerLevel || 100);
               const currentXP = (Number(xp) || 0) % requiredXP;
               
@@ -112,7 +112,7 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel
         <div className={`glass-card p-6 rounded-2xl animate-enter delay-200 ${darkMode ? '' : 'bg-white/80'}`}>
           <div className="flex items-center gap-3 mb-6">
             <div className={`p-2 rounded-lg ${darkMode ? 'bg-purple-500/20' : 'bg-purple-100'}`}>
-              <Star className={`w-6 h-6 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+              <SLCrystal size={22} style={{ color: darkMode ? '#A855F7' : '#7C3AED' }} />
             </div>
             <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Milestones</h3>
           </div>
@@ -137,9 +137,9 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel
               >
                 <div className="mb-2">
                   {milestone.unlocked ? (
-                    <Unlock className={`w-6 h-6 mx-auto ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                    <SLCheck size={22} style={{ color: darkMode ? '#A855F7' : '#7C3AED', margin: '0 auto' }} />
                   ) : (
-                    <Lock className={`w-6 h-6 mx-auto ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                    <SLLock size={22} style={{ color: darkMode ? '#4A5568' : '#9CA3AF', margin: '0 auto' }} />
                   )}
                 </div>
                 <span className={`text-sm ${milestone.unlocked ? (darkMode ? 'text-white' : 'text-gray-900') : (darkMode ? 'text-gray-500' : 'text-gray-400')}`}>
@@ -156,7 +156,7 @@ const StatsPanel = ({ player, pillars, achievements, darkMode = true, xpPerLevel
         <div className={`glass-card p-6 rounded-2xl animate-enter ${darkMode ? '' : 'bg-white/80'}`}>
           <div className="flex items-center gap-3 mb-6">
             <div className={`p-2 rounded-lg ${darkMode ? 'bg-yellow-500/20' : 'bg-yellow-100'}`}>
-              <Trophy className={`w-6 h-6 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
+              <SLTrophy size={22} style={{ color: darkMode ? '#F59E0B' : '#D97706' }} />
             </div>
             <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Achievements</h3>
           </div>

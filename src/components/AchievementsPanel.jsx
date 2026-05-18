@@ -1,17 +1,17 @@
 import { useRef } from 'react';
-import { Trophy, Lock, Star, Flame, Target, Zap, BookOpen, DollarSign, User2 } from 'lucide-react';
+import { SLTrophy, SLLock, SLCrystal, SLFlame, SLTarget, SLZap, SLBook, SLCoin, SLUser } from './icons/SLIcons';
 import gsap from 'gsap';
 
 // Icon map outside component
 const ICON_MAP = {
-  streak: Flame,
-  level: Star,
-  quests: Target,
-  xp: Zap,
-  boss: Trophy,
-  pillar_personal: User2,
-  pillar_financial: DollarSign,
-  pillar_education: BookOpen,
+  streak:           SLFlame,
+  level:            SLCrystal,
+  quests:           SLTarget,
+  xp:               SLZap,
+  boss:             SLTrophy,
+  pillar_personal:  SLUser,
+  pillar_financial: SLCoin,
+  pillar_education: SLBook,
 };
 
 const AchievementCard = ({ achievement, darkMode = true }) => {
@@ -64,7 +64,7 @@ const AchievementCard = ({ achievement, darkMode = true }) => {
           role="status"
           aria-label="Achievement locked"
         >
-          <Lock className="w-6 h-6 text-gray-500" aria-hidden="true" />
+          <SLLock size={22} style={{ color: '#4A5568' }} aria-hidden="true" />
         </div>
       )}
       
@@ -77,7 +77,7 @@ const AchievementCard = ({ achievement, darkMode = true }) => {
             : 'bg-gray-700/50 border border-gray-600/30'
           }
         `}>
-          <IconComponent className={`w-6 h-6 ${isUnlocked ? 'text-amber-400' : 'text-gray-500'}`} />
+          <IconComponent size={22} style={{ color: isUnlocked ? '#F59E0B' : '#4A5568' }} />
         </div>
         
         {/* Info */}
@@ -124,7 +124,7 @@ const AchievementsPanel = ({ achievements, darkMode = true }) => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-lg ${darkMode ? 'bg-amber-500/20' : 'bg-amber-100'}`}>
-            <Trophy className={`w-6 h-6 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+            <SLTrophy size={22} style={{ color: darkMode ? '#F59E0B' : '#D97706' }} />
           </div>
           <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Achievements

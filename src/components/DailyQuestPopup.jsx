@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { SLAlert, SLQuestDone, SLClose } from './icons/SLIcons';
 
 const DailyQuestPopup = ({ 
   dailyQuests, 
@@ -98,7 +98,7 @@ const DailyQuestPopup = ({
         <div className={`border-b ${isPenaltyMode ? 'border-red-500/50' : 'border-blue-500/50'} py-4 px-6`}>
           <div className="flex items-center justify-center gap-2">
             {isPenaltyMode ? (
-              <AlertTriangle className="text-red-400 w-6 h-6" />
+              <SLAlert size={22} style={{ color: '#EF4444' }} />
             ) : (
               <span className="text-blue-400 text-xl">!</span>
             )}
@@ -106,7 +106,7 @@ const DailyQuestPopup = ({
               {isPenaltyMode ? 'Penalty Alert' : 'System Alert'}
             </h2>
             {isPenaltyMode ? (
-              <AlertTriangle className="text-red-400 w-6 h-6" />
+              <SLAlert size={22} style={{ color: '#EF4444' }} />
             ) : (
               <span className="text-blue-400 text-xl">!</span>
             )}
@@ -130,9 +130,9 @@ const DailyQuestPopup = ({
                 className={`flex items-center gap-3 px-3 py-2 rounded ${isPenaltyMode ? 'bg-red-950/50' : 'bg-blue-950/50'} border ${isPenaltyMode ? 'border-red-500/30' : 'border-blue-500/30'}`}
               >
                 {quest.completed ? (
-                  <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                  <SLQuestDone size={14} style={{ color: '#22C55E', flexShrink: 0 }} />
                 ) : (
-                  <XCircle className={`w-4 h-4 ${isPenaltyMode ? 'text-red-400' : 'text-gray-500'} flex-shrink-0`} />
+                  <SLClose size={14} style={{ color: isPenaltyMode ? '#EF4444' : '#4A5568', flexShrink: 0 }} />
                 )}
                 <span className={`text-sm ${quest.completed ? 'text-green-300 line-through' : isPenaltyMode ? 'text-red-200' : 'text-blue-200'}`}>
                   {quest.task}
