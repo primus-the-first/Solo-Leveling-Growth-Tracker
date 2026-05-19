@@ -94,7 +94,7 @@ export const calculatePillarStats = (pillar) => {
 
 // Initial player state
 export const DEFAULT_PLAYER = {
-  name: 'Primus Aeternus',
+  name: 'Hunter',
   level: 1,
   totalXP: 0,
   title: 'Awakened Hunter',
@@ -132,9 +132,9 @@ export const DEFAULT_PILLARS = {
     xp: 0,
     xpBonus: 0,
     stats: [
-      { name: 'Self Control', value: 45 },
-      { name: 'Daily Discipline', value: 30 },
-      { name: 'Habit Strength', value: 25 },
+      { name: 'Self Control', value: 0 },
+      { name: 'Daily Discipline', value: 0 },
+      { name: 'Habit Strength', value: 0 },
     ],
   },
   spiritual: {
@@ -146,9 +146,9 @@ export const DEFAULT_PILLARS = {
     xp: 0,
     xpBonus: 0,
     stats: [
-      { name: 'Inner Peace', value: 35 },
-      { name: 'Courage', value: 40 },
-      { name: 'Wisdom', value: 30 },
+      { name: 'Inner Peace', value: 0 },
+      { name: 'Courage', value: 0 },
+      { name: 'Wisdom', value: 0 },
     ],
   },
   financial: {
@@ -160,9 +160,9 @@ export const DEFAULT_PILLARS = {
     xp: 0,
     xpBonus: 0,
     stats: [
-      { name: 'Income', value: 20 },
-      { name: 'Savings', value: 15 },
-      { name: 'Investment', value: 10 },
+      { name: 'Income', value: 0 },
+      { name: 'Savings', value: 0 },
+      { name: 'Investment', value: 0 },
     ],
   },
   career: {
@@ -174,9 +174,9 @@ export const DEFAULT_PILLARS = {
     xp: 0,
     xpBonus: 0,
     stats: [
-      { name: 'Web Dev', value: 50 },
-      { name: 'AI/ML', value: 35 },
-      { name: 'Data Analysis', value: 40 },
+      { name: 'Primary Skill', value: 0 },
+      { name: 'Secondary Skill', value: 0 },
+      { name: 'Productivity', value: 0 },
     ],
   },
   education: {
@@ -188,34 +188,34 @@ export const DEFAULT_PILLARS = {
     xp: 0,
     xpBonus: 0,
     stats: [
-      { name: 'Books Read', value: 10 },
-      { name: 'Courses Completed', value: 5 },
-      { name: 'Skills Acquired', value: 15 },
+      { name: 'Books Read', value: 0 },
+      { name: 'Courses Completed', value: 0 },
+      { name: 'Skills Acquired', value: 0 },
     ],
   },
 };
 
 // Default quests
 export const DEFAULT_DAILY_QUESTS = [
-  { id: 1, task: 'Read 10-20 pages', xp: 20, pillar: 'personal', completed: false },
-  { id: 2, task: 'Prayer/Reflection 5-10 min', xp: 10, pillar: 'spiritual', completed: false },
-  { id: 3, task: 'Skill Practice 30-60 min', xp: 20, pillar: 'career', completed: false },
-  { id: 4, task: 'Track Spending', xp: 30, pillar: 'financial', completed: false },
-  { id: 5, task: 'Discipline Act (avoid distractions)', xp: 15, pillar: 'personal', completed: false },
+  { id: 1, task: 'Morning routine', xp: 20, pillar: 'personal', completed: false },
+  { id: 2, task: 'Reflect / meditate 5 min', xp: 10, pillar: 'spiritual', completed: false },
+  { id: 3, task: 'Work on a skill 30 min', xp: 20, pillar: 'career', completed: false },
+  { id: 4, task: 'Track your spending', xp: 15, pillar: 'financial', completed: false },
+  { id: 5, task: 'Read 10 pages', xp: 15, pillar: 'education', completed: false },
 ];
 
 export const DEFAULT_WEEKLY_QUESTS = [
-  { id: 1, task: 'Read 30-50 pages', xp: 50, pillar: 'personal', completed: false },
-  { id: 2, task: 'Complete Project Milestone', xp: 50, pillar: 'career', completed: false },
-  { id: 3, task: 'Weekly Financial Review', xp: 20, pillar: 'financial', completed: false },
-  { id: 4, task: 'Weekly Spiritual Reflection', xp: 20, pillar: 'spiritual', completed: false },
+  { id: 1, task: 'Complete a learning goal', xp: 50, pillar: 'education', completed: false },
+  { id: 2, task: 'Make progress on a project', xp: 50, pillar: 'career', completed: false },
+  { id: 3, task: 'Weekly budget review', xp: 30, pillar: 'financial', completed: false },
+  { id: 4, task: 'Weekly reflection journal', xp: 20, pillar: 'spiritual', completed: false },
 ];
 
 export const DEFAULT_MONTHLY_QUESTS = [
-  { id: 1, task: 'Complete 1 Book', xp: 100, pillar: 'personal', completed: false },
-  { id: 2, task: 'Achieve Financial Target', xp: 100, pillar: 'financial', completed: false },
-  { id: 3, task: 'Complete Major Project', xp: 100, pillar: 'career', completed: false },
-  { id: 4, task: 'Monthly Journal Summary', xp: 50, pillar: 'spiritual', completed: false },
+  { id: 1, task: 'Finish a book', xp: 100, pillar: 'education', completed: false },
+  { id: 2, task: 'Hit a financial milestone', xp: 100, pillar: 'financial', completed: false },
+  { id: 3, task: 'Ship or complete a project', xp: 100, pillar: 'career', completed: false },
+  { id: 4, task: 'Monthly review & goal reset', xp: 50, pillar: 'personal', completed: false },
 ];
 
 // Default boss battles
@@ -402,6 +402,22 @@ export const saveToFirestore = async (userId, gameData = null) => {
 };
 
 // Load game data from Firestore
+// Convert onboarding goals into daily quests
+const goalsToQuests = (goals) => {
+  if (!Array.isArray(goals) || goals.length === 0) return null;
+  const quests = [];
+  let id = 1;
+  goals.forEach(({ pillar, goals: pillarGoals }) => {
+    if (!Array.isArray(pillarGoals)) return;
+    pillarGoals.forEach(task => {
+      if (task?.trim()) {
+        quests.push({ id: id++, task: task.trim(), xp: 20, pillar, completed: false });
+      }
+    });
+  });
+  return quests.length > 0 ? quests : null;
+};
+
 export const loadFromFirestore = async (userId) => {
   if (!userId) return null;
 
@@ -416,8 +432,8 @@ export const loadFromFirestore = async (userId) => {
     if (data?.lastSaved) delete data.lastSaved;
 
     // Resolve hunter name: onboarding doc > root user doc > gameData.hunterName
-    let profileName =
-      onboardingSnap.exists() ? onboardingSnap.data()?.hunterName ?? null : null;
+    const onboardingData = onboardingSnap.exists() ? onboardingSnap.data() : null;
+    let profileName = onboardingData?.hunterName ?? null;
     if (!profileName && userDocSnap.exists())
       profileName = userDocSnap.data()?.hunterName ?? null;
     if (!profileName && data?.hunterName)
@@ -427,6 +443,15 @@ export const loadFromFirestore = async (userId) => {
       if (!data) data = {};
       if (!data.player) data.player = JSON.parse(JSON.stringify(DEFAULT_PLAYER));
       data.player.name = profileName;
+    }
+
+    // First-time user: seed daily quests from onboarding goals
+    if (!gameSnap.exists() && onboardingData?.goals) {
+      const seededQuests = goalsToQuests(onboardingData.goals);
+      if (seededQuests) {
+        if (!data) data = {};
+        data.dailyQuests = seededQuests;
+      }
     }
 
     return data;
