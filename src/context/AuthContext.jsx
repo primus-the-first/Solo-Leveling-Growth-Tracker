@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase';
+import { clearGameState } from '../gameState';
 
 const AuthContext = createContext(null);
 
@@ -26,6 +27,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const lastUIDRef = useRef(null);
 
   // Handle redirect result on page load (fallback from popup-blocked)
   useEffect(() => {
@@ -41,6 +43,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // Different user signed in — wipe the previous user's localStorage cache
+        if (lastUIDRef.current && lastUIDRef.current !== firebaseUser.uid) {
+          clearGameState();
+        }
+        lastUIDRef.current = firebaseUser.uid;
         setLoading(true); // stay in loading state while we fetch the user doc
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));

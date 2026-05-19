@@ -321,6 +321,16 @@ export const saveState = (key, value) => {
   }
 };
 
+// Clear all game state from localStorage (used on user switch)
+export const clearGameState = () => {
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith(STORAGE_PREFIX)) keysToRemove.push(key);
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+};
+
 // Export all save data to a JSON object
 export const exportSaveData = () => {
   const data = {};

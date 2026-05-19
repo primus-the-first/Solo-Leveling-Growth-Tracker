@@ -1044,11 +1044,12 @@ function Dashboard() {
 
 // App with Routes
 function App() {
+  const { user } = useAuth();
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/onboarding" element={<OnboardingFlow />} />
-      <Route path="/app" element={<Dashboard />} />
+      <Route path="/app" element={<Dashboard key={user?.uid ?? 'guest'} />} />
     </Routes>
   );
 }
