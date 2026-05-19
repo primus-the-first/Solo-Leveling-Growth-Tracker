@@ -94,9 +94,14 @@ export const AuthProvider = ({ children }) => {
       return result.user;
     } catch (err) {
       if (err.code === 'auth/popup-blocked') {
-        // Popup was blocked — fall back to redirect flow
-        await signInWithRedirect(auth, googleProvider);
-        return null; // page will reload; result handled by getRedirectResult on mount
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return null; // page will reload; result handled by getRedirectResult on mount
+        } catch {
+          const friendlyErr = new Error('Pop-up was blocked. Please allow pop-ups for this site and try again.');
+          friendlyErr.code = 'auth/popup-blocked';
+          throw friendlyErr;
+        }
       }
       setError(err.message);
       throw err;

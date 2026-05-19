@@ -39,7 +39,11 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
       }
       // If user is null, we're in redirect flow — page is reloading, do nothing
     } catch (err) {
-      setError(err.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, ''));
+      const cleaned = (err.message || '')
+        .replace('Firebase: ', '')
+        .replace(/\s*\(auth\/[^)]*\)\.?/g, '')
+        .trim();
+      setError(cleaned || 'Sign in failed. Please try again.');
       setIsLoading(false);
     }
   };
@@ -58,7 +62,11 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, ''));
+      const cleaned = (err.message || '')
+        .replace('Firebase: ', '')
+        .replace(/\s*\(auth\/[^)]*\)\.?/g, '')
+        .trim();
+      setError(cleaned || 'Sign in failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
