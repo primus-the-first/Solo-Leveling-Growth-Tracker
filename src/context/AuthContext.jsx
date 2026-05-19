@@ -1,7 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { 
+import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -24,6 +26,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Handle redirect result on page load (fallback from popup-blocked)
+  useEffect(() => {
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) {
+        await createUserProfile(result.user);
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Listen for auth state changes
   useEffect(() => {
@@ -81,6 +93,11 @@ export const AuthProvider = ({ children }) => {
       await createUserProfile(result.user);
       return result.user;
     } catch (err) {
+      if (err.code === 'auth/popup-blocked') {
+        // Popup was blocked — fall back to redirect flow
+        await signInWithRedirect(auth, googleProvider);
+        return null; // page will reload; result handled by getRedirectResult on mount
+      }
       setError(err.message);
       throw err;
     }

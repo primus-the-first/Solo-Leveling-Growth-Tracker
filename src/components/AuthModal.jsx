@@ -31,12 +31,15 @@ const AuthModal = ({ isOpen, onClose, onSuccess }) => {
     setIsLoading(true);
     setError('');
     try {
-      await signInWithGoogle();
-      onSuccess?.();
-      onClose();
+      const user = await signInWithGoogle();
+      if (user) {
+        // Popup succeeded — navigate normally
+        onSuccess?.();
+        onClose();
+      }
+      // If user is null, we're in redirect flow — page is reloading, do nothing
     } catch (err) {
-      setError(err.message);
-    } finally {
+      setError(err.message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, ''));
       setIsLoading(false);
     }
   };
