@@ -16,10 +16,14 @@ const LandingPage = () => {
   const ctaRef = useRef(null);
   const landingContentRef = useRef(null);
 
-  // Redirect if already logged in
+  // Redirect if already logged in — check onboarding status first
   useEffect(() => {
     if (!loading && user) {
-      navigate('/app');
+      getDoc(doc(db, 'users', user.uid, 'gameData', 'onboarding'))
+        .then(snap => {
+          navigate(snap.exists() && snap.data()?.completed ? '/app' : '/onboarding', { replace: true });
+        })
+        .catch(() => navigate('/app', { replace: true }));
     }
   }, [user, loading, navigate]);
 
@@ -66,59 +70,9 @@ const LandingPage = () => {
     setShowAuthModal(true);
   };
 
-  const handleAuthSuccess = async () => {
-    // Get the current user from Firebase auth directly (not from React state which may be stale)
-    const { auth } = await import('../firebase');
-    const currentUser = auth.currentUser;
-    
-    if (currentUser) {
-      try {
-        const onboardingDoc = await getDoc(doc(db, 'users', currentUser.uid, 'gameData', 'onboarding'));
-        const destination = onboardingDoc.exists() && onboardingDoc.data().completed 
-          ? '/app' 
-          : '/onboarding';
-        
-        // Animate out before navigation
-        if (landingContentRef.current) {
-          gsap.to(landingContentRef.current, {
-            opacity: 0,
-            y: -30,
-            duration: 0.4,
-            ease: 'power2.in',
-            onComplete: () => navigate(destination)
-          });
-        } else {
-          navigate(destination);
-        }
-      } catch (error) {
-        console.error('Error checking onboarding:', error);
-        // Default to onboarding on error
-        if (landingContentRef.current) {
-          gsap.to(landingContentRef.current, {
-            opacity: 0,
-            y: -30,
-            duration: 0.4,
-            ease: 'power2.in',
-            onComplete: () => navigate('/onboarding')
-          });
-        } else {
-          navigate('/onboarding');
-        }
-      }
-    } else {
-      // Fallback - go to onboarding
-      if (landingContentRef.current) {
-        gsap.to(landingContentRef.current, {
-          opacity: 0,
-          y: -30,
-          duration: 0.4,
-          ease: 'power2.in',
-          onComplete: () => navigate('/onboarding')
-        });
-      } else {
-        navigate('/onboarding');
-      }
-    }
+  const handleAuthSuccess = () => {
+    // Navigation is handled by the useEffect watching user/loading state
+    setShowAuthModal(false);
   };
 
   const features = [
