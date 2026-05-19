@@ -68,6 +68,8 @@ export const AuthProvider = ({ children }) => {
           });
         }
       } else {
+        clearGameState();
+        lastUIDRef.current = null;
         setUser(null);
       }
       setLoading(false);

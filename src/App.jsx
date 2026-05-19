@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Header from './components/Header';
 import SettingsModal from './components/SettingsModal';
@@ -47,7 +47,16 @@ import OnboardingFlow from './components/OnboardingFlow';
 // Main Dashboard Component (was App)
 function Dashboard() {
   // Auth state
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to landing if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState(null);
